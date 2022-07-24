@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+    <script>
+        // array of months in Spanish
+        //var months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        // abbreviations
+        var months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+        // https://stackoverflow.com/questions/24791010/how-to-find-the-coordinate-that-is-closest-to-the-point-of-origin
+        
+        let station_data, coordinates;
+        
+        function distance(lat1, lon1, lat2, lon2, unit) {
+            var radlat1 = Math.PI * lat1/180
+            var radlat2 = Math.PI * lat2/180
+            var theta = lon1-lon2
+            var radtheta = Math.PI * theta/180
+            var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+            if (dist > 1) {
+                dist = 1;
+            }
+            dist = Math.acos(dist)
+            dist = dist * 180/Math.PI
+            dist = dist * 60 * 1.1515
+            if (unit=="K") { dist = dist * 1.609344 }
+            if (unit=="N") { dist = dist * 0.8684 }
+            return dist
+        }
+        
+        // load json in variable
+        function grabData(route) {
+            return fetch(route)
+            .then(response => response.json());
+        }
+        
+        // Geolocation
+        // https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition
+        const options = {
+            enableHighAccuracy: false,
+            timeout: 5000,
+            maximumAge: 0
+        };
+        
+        function success(pos) {
+            const user_coordinates = pos.coords;
+            
+            console.log('Your current position is:');
+            console.log(`Latitude : ${user_coordinates.latitude}`);
+            console.log(`Longitude: ${user_coordinates.longitude}`);
+            console.log(`More or less ${user_coordinates.accuracy} meters.`);
+            
+            var station;
+            
+            for (var i = 0; i < station_data.length; i++) {
+                var station_current = station_data[i];
+                station_current.distance = distance(user_coordinates.latitude, user_coordinates.longitude, station_current.lat, station_current.lon, "K");
+                
+                if ( !station || !station.distance || station_current.distance < station.distance) {
+                    station = station_current;
+                }
+            }
+            
+            // show closest station
+            document.querySelector(".closest-station").innerHTML += `${station.nombre}`;
+
+            if ( station.indicativo ) {
+                var path = "./data/stations/" + station.indicativo + ".json"
+                grabData(path).then( function(climate_data) {
+
+                    // iterate over months and calculate average
+                    var data_array = {};
+                    for (var i = 0; i < climate_data.data.temp_max.length; i++) {
+                        var month = climate_data.data.temp_max[i].month;
+                        var value = parseFloat(climate_data.data.temp_max[i].value);
+                        
+                        if ( !data_array[month] ) {
+                            data_array[month] = [];
+                        }
+
+                        data_array[month].push(value);
+                    }
+
+                    for (var month in data_array) {
+                        var average = 0;
+                        for (var i = 0; i < data_array[month].length; i++) {
+                            average += data_array[month][i];
+                        }
+                        average = average / data_array[month].length;
+                        data_array[month] = average.toFixed(1);
+                    }
+
+                    console.log(data_array)
+
+                    // create table
+                    var table = document.createElement("table");
+                    table.classList.add("climate-table");
+                    var table_body = document.createElement("tbody");
+                    table.appendChild(table_body);
+
+                    // create table header
+                    var table_header = document.createElement("tr");
+                    table_header.classList.add("climate-table-header");
+                    table_body.appendChild(table_header);
+                    var table_header_cell = document.createElement("th");
+                    table_header_cell.innerHTML = "Mes";
+                    table_header.appendChild(table_header_cell);
+                    // add one column per month
+                    for (var i = 0; i < months.length; i++) {
+                        var table_header_cell = document.createElement("th");
+                        table_header_cell.innerHTML = months[i];
+                        table_header.appendChild(table_header_cell);
+                    }
+                    // add one row for max temperatures
+                    var table_row = document.createElement("tr");
+                    table_row.classList.add("climate-table-row");
+                    table_body.appendChild(table_row);
+                    var table_row_cell = document.createElement("th");
+                    table_row_cell.innerHTML = "Máximas";
+                    table_row.appendChild(table_row_cell);
+                    // add one column per month
+                    for (var i = 0; i < months.length; i++) {
+                        var table_row_cell = document.createElement("td");
+                        table_row_cell.innerHTML = data_array[i + 1];
+                        table_row.appendChild(table_row_cell);
+                    }
+
+                    // inject tabel
+                    document.querySelector(".climate-table-container").appendChild(table);
+
+                });
+            }
+        }
+        
+        function error(err) {
+            console.warn(`ERROR(${err.code}): ${err.message}`);
+        }
+        
+        grabData("./data/aemet-stations-clean.json").then( function(data) {
+            station_data = data;
+            navigator.geolocation.getCurrentPosition(success, error, options);
+        });
+        
+    </script>
+</head>
+
+<body>
+    <div class="closest-station">La estación meteorológica más cercana es: </div>
+    <div class="climate-table-container"></div>
+    <div class="credits">Datos de AEMET</div>
+</body>
+</html>

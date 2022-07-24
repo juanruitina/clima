@@ -1,0 +1,26 @@
+html, body {
+    margin: 0;
+    height: 100%;
+}
+
+body {
+    font-family: system-ui, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    width: 50px;
+    text-align: center;
+    border: 1px solid black;
+    padding: .2rem .4rem;
+}

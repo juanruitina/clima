@@ -1,0 +1,20 @@
+{
+  "name": "clima-pro",
+  "version": "1.0.0",
+  "description": "## Procesar datos",
+  "main": "script.js",
+  "scripts": {
+    "start": "node script.js",
+    "process": "node script.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+},
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "jsonfile": "^6.1.0",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {},
+  "keywords": []
+}
