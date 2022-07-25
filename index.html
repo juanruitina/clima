@@ -107,34 +107,10 @@
                     for (var i = 0; i < months.length; i++) {
                         var table_row_cell = document.createElement("td");
                         table_row_cell.innerHTML = climate_data.projection_linear.temp_max[i + 1];
+                        // add data attribute with value
+                        table_row_cell.setAttribute("data-value", climate_data.projection_linear.temp_max[i + 1]);
                         table_row.appendChild(table_row_cell);
-                    }
 
-                    // AVERAGES
-                    var table_row = document.createElement("tr");
-                    table_row.classList.add("climate-table-row");
-                    table_body.appendChild(table_row);
-                    var table_row_cell = document.createElement("th");
-                    table_row_cell.innerHTML = "Temperatura máxima media (media 30 años)";
-                    table_row.appendChild(table_row_cell);
-
-                    // add one column per month
-                    for (var i = 0; i < months.length; i++) {
-                        var table_row_cell = document.createElement("td");
-                        table_row_cell.innerHTML = climate_data.averages.temp_max[i + 1];
-                        table_row.appendChild(table_row_cell);
-                    }
-
-                    // DIFFERENCE
-                    var table_row = document.createElement("tr");
-                    table_row.classList.add("climate-table-row");
-                    table_body.appendChild(table_row);
-                    var table_row_cell = document.createElement("th");
-                    table_row_cell.innerHTML = "Diferencia (estimada - media)";
-                    table_row.appendChild(table_row_cell);
-
-                    for (var i = 0; i < months.length; i++) {
-                        var table_row_cell = document.createElement("td");
                         var difference = climate_data.projection_linear.temp_max[i + 1] - climate_data.averages.temp_max[i + 1];
                         difference = difference.toFixed(1);
 
@@ -142,13 +118,125 @@
                             difference = "+" + difference;
                         }
 
-                        table_row_cell.innerHTML = difference;
-                        table_row.appendChild(table_row_cell);
+                        table_row_cell.innerHTML += `<span class="difference"><span class="sr-only">, Difference: </span>${difference}</span>`;
                     }
 
                     // inject table
                     document.querySelector(".climate-table-container").appendChild(table);
 
+                    // change cell color based on data-value
+                    var cells = document.querySelectorAll(".climate-table td");
+                    for (var i = 0; i < cells.length; i++) {
+                        var cell = cells[i];
+                        var value = cell.getAttribute("data-value");
+                        // add class in increments of 10, from -10 to 40
+                        var class_name = "";
+                        if ( value < 0 ) {
+                            class_name = "color-temp-freezing";
+                        } else if ( value < 10 ) {
+                            class_name = "color-temp-cold";
+                        } else if ( value < 20 ) {
+                            class_name = "color-temp-mild";
+                        } else if ( value < 30 ) {
+                            class_name = "color-temp-warm";
+                        } else {
+                            class_name = "color-temp-hot";
+                        }
+                        cell.classList.add(class_name);
+                    }
+
+                    // colors from https://en.wikipedia.org/wiki/Module:Weather_box/colors
+
+                    function hex ( value ) {
+                        //let hex = value.toString(16);
+
+                        var hex = roundDblDigitHex(value);
+
+                        if ((hex.length % 2) > 0) {
+                            hex = "0" + hex;
+                        }
+
+                        return hex;
+                    }
+
+                    function roundDblDigitHex(x) {
+                        x = Math.round(x);
+                        if (x < 0) x = 0;
+                        if (x > 255) x = 255;
+                        x = x.toString(16);
+                        if (x.length === 1) x = '0'+x;
+                        return x;
+                    }
+
+                    function format_line ( background, text_color ) {
+                        return "background: #" + background + "; color:#" + text_color + ";";
+                    }
+
+                    function range_pos ( value, start, stop ) {
+                        if (start < stop) {
+                            if (value < start) {
+                                return 0;
+                            } else if (value > stop) {
+                                return 1;
+                            } else {
+                                return (value - start) / (stop - start);
+                            }
+                        } else {
+                            if (value < stop) {
+                                return 1;
+                            } else if (value > start) {
+                                return 0;
+                            } else {
+                                return (start - value) / (start - stop);
+                            }
+                        }
+                    }
+
+                    function color_temperature(value) {
+                        var item, background, text_color;
+
+                        if (value < 4.5) {
+                            item = range_pos(value, -42.75, 4.5) * 255;
+                            background = hex(item);
+                        } else {
+                            item = range_pos(value, 60, 41.5) * 255;
+                            background = hex(item);
+                        }
+
+                        if (value <= 4.5) {
+                            item = range_pos(value, -42.75, 4.5) * 255;
+                            background = background + hex(item);
+                        } else {
+                            item = range_pos(value, 41.5, 4.5) * 255;
+                            background = background + hex(item);
+                        }
+
+                        if (value < -42.78) {
+                            item = range_pos(value, -90, -42.78) * 255;
+                            background = background + hex(item);
+                        } else {
+                            item = range_pos(value, 23, 4.5) * 255;
+                            background = background + hex(item);
+                        }
+
+                        if (value < -23.3 || value >= 37.8) {
+                            text_color = "FFFFFF";
+                        } else {
+                            text_color = "000000";
+                        }
+
+                        return format_line(background, text_color);
+                    }
+
+                    // change cell color based on data-value
+                    var cells = document.querySelectorAll(".climate-table td");
+
+                    for (var i = 0; i < cells.length; i++) {
+                        var cell = cells[i];
+                        var value = cell.getAttribute("data-value");
+                        var color = color_temperature(value);
+                        cell.setAttribute("style", color);
+                    }
                 });
             }
         }
