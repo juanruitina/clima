@@ -38,6 +38,194 @@ const options = {
     maximumAge: 0
 };
 
+function sortSelectors() {
+    var selectors = document.querySelectorAll('select');
+
+    selectors.forEach(function(cl) {
+        var clTexts = new Array();
+
+        for (i = 1; i < cl.length; i++) {
+            clTexts[i - 1] =
+                cl.options[i].text.toUpperCase() + "," +
+                cl.options[i].text + "," +
+                cl.options[i].value + "," +
+                cl.options[i].selected;
+        }
+
+        clTexts.sort();
+
+        for (i = 1; i < cl.length; i++) {
+            var parts = clTexts[i - 1].split(',');
+
+            cl.options[i].text = parts[1];
+            cl.options[i].value = parts[2];
+            if (parts[3] == "true") {
+                cl.options[i].selected = true;
+            } else {
+                cl.options[i].selected = false;
+            }
+        }
+    });
+}
+
+function loadTable(aemet_id) {
+    var path = "./data/stations/" + aemet_id + ".json"
+    grabData(path).then(function (climate_data) {
+        document.querySelector(".station").innerHTML = `Estación: ${climate_data.name} · ${climate_data.region} · ID: ${climate_data.aemet_id}`;
+
+        // create table
+        var table = document.createElement("table");
+        table.classList.add("climate-table");
+        var table_body = document.createElement("tbody");
+        table.appendChild(table_body);
+
+        // create table header
+        var table_header = document.createElement("tr");
+        table_header.classList.add("climate-table-header");
+        table_body.appendChild(table_header);
+        var table_header_cell = document.createElement("th");
+        table_header_cell.innerHTML = "Mes";
+        table_header.appendChild(table_header_cell);
+
+        // add one column per month
+        for (var i = 0; i < months.length; i++) {
+            var table_header_cell = document.createElement("th");
+            table_header_cell.innerHTML = months[i];
+            table_header.appendChild(table_header_cell);
+        }
+
+        // PROJECTIONS
+        var table_row = document.createElement("tr");
+        table_row.classList.add("climate-table-row");
+        table_body.appendChild(table_row);
+        var table_row_cell = document.createElement("th");
+        table_row_cell.innerHTML = "Temp. máx. media (°C)";
+        table_row.appendChild(table_row_cell);
+
+        // add one column per month
+        for (var i = 0; i < months.length; i++) {
+            var table_row_cell = document.createElement("td");
+            
+            var value = climate_data.projection_linear.temp_max[i + 1];
+            var difference = climate_data.projection_linear.temp_max[i + 1] - climate_data.averages.temp_max[i + 1];
+
+            table_row_cell.innerHTML = value;
+            table_row_cell.setAttribute("data-value", value);
+            table_row.appendChild(table_row_cell);
+
+            difference = difference.toFixed(1);
+
+            if (difference > 0) {
+                difference = "+" + difference;
+            }
+
+            table_row_cell.innerHTML += `<span class="difference"><span class="sr-only">, Difference: </span>${difference}</span>`;
+        }
+
+        // remove table
+        document.querySelector(".climate-table-container").innerHTML = "";
+
+        // inject table
+        document.querySelector(".climate-table-container").appendChild(table);
+
+        // colors from https://en.wikipedia.org/wiki/Module:Weather_box/colors
+
+        function hex(value) {
+            //let hex = value.toString(16);
+
+            var hex = roundDblDigitHex(value);
+
+            if ((hex.length % 2) > 0) {
+                hex = "0" + hex;
+            }
+
+            return hex;
+        }
+
+        function roundDblDigitHex(x) {
+            x = Math.round(x);
+            if (x < 0) x = 0;
+            if (x > 255) x = 255;
+            x = x.toString(16);
+            if (x.length === 1) x = '0' + x;
+            return x;
+        }
+
+        function format_line(background, text_color) {
+            return "background: #" + background + "; color:#" + text_color + ";";
+        }
+
+        function range_pos(value, start, stop) {
+            if (start < stop) {
+                if (value < start) {
+                    return 0;
+                } else if (value > stop) {
+                    return 1;
+                } else {
+                    return (value - start) / (stop - start);
+                }
+            } else {
+                if (value < stop) {
+                    return 1;
+                } else if (value > start) {
+                    return 0;
+                } else {
+                    return (start - value) / (start - stop);
+                }
+            }
+        }
+
+        function color_temperature(value) {
+            var item, background, text_color;
+
+            if (value < 4.5) {
+                item = range_pos(value, -42.75, 4.5) * 255;
+                background = hex(item);
+            } else {
+                item = range_pos(value, 60, 41.5) * 255;
+                background = hex(item);
+            }
+
+            if (value <= 4.5) {
+                item = range_pos(value, -42.75, 4.5) * 255;
+                background = background + hex(item);
+            } else {
+                item = range_pos(value, 41.5, 4.5) * 255;
+                background = background + hex(item);
+            }
+
+            if (value < -42.78) {
+                item = range_pos(value, -90, -42.78) * 255;
+                background = background + hex(item);
+            } else {
+                item = range_pos(value, 23, 4.5) * 255;
+                background = background + hex(item);
+            }
+
+            if (value < -23.3 || value >= 37.8) {
+                text_color = "FFFFFF";
+            } else {
+                text_color = "000000";
+            }
+
+            return format_line(background, text_color);
+        }
+
+        // change cell color based on data-value
+        var cells = document.querySelectorAll(".climate-table td");
+
+        for (var i = 0; i < cells.length; i++) {
+            var cell = cells[i];
+            var value = cell.getAttribute("data-value");
+            
+            if (value != "") {
+                var color = color_temperature(value);
+                cell.setAttribute("style", color);
+            } 
+        }
+    });
+}
+
 function success(pos) {
     const user_coordinates = pos.coords;
 
@@ -57,178 +245,8 @@ function success(pos) {
         }
     }
 
-    // show closest station
-    document.querySelector(".station").innerHTML += `La estación meteorológica más cercana es: ${station.nombre}`;
-
-    // station.indicativo = 3195;
-
-    if (station.indicativo) {
-        var path = "./data/stations/" + station.indicativo + ".json"
-        grabData(path).then(function (climate_data) {
-            // create table
-            var table = document.createElement("table");
-            table.classList.add("climate-table");
-            var table_body = document.createElement("tbody");
-            table.appendChild(table_body);
-
-            // create table header
-            var table_header = document.createElement("tr");
-            table_header.classList.add("climate-table-header");
-            table_body.appendChild(table_header);
-            var table_header_cell = document.createElement("th");
-            table_header_cell.innerHTML = "Mes";
-            table_header.appendChild(table_header_cell);
-
-            // add one column per month
-            for (var i = 0; i < months.length; i++) {
-                var table_header_cell = document.createElement("th");
-                table_header_cell.innerHTML = months[i];
-                table_header.appendChild(table_header_cell);
-            }
-
-            // PROJECTIONS
-            var table_row = document.createElement("tr");
-            table_row.classList.add("climate-table-row");
-            table_body.appendChild(table_row);
-            var table_row_cell = document.createElement("th");
-            table_row_cell.innerHTML = "Temp. máx. media (°C)";
-            table_row.appendChild(table_row_cell);
-
-            // add one column per month
-            for (var i = 0; i < months.length; i++) {
-                var table_row_cell = document.createElement("td");
-                table_row_cell.innerHTML = climate_data.projection_linear.temp_max[i + 1];
-                // add data attribute with value
-                table_row_cell.setAttribute("data-value", climate_data.projection_linear.temp_max[i + 1]);
-                table_row.appendChild(table_row_cell);
-
-                /*  var difference = climate_data.projection_linear.temp_max[i + 1] - climate_data.averages.temp_max[i + 1];
-                difference = difference.toFixed(1);
-
-                if ( difference > 0 ) {
-                    difference = "+" + difference;
-                }
-
-                table_row_cell.innerHTML += `<span class="difference"><span class="sr-only">, Difference: </span>${difference}</span>`;  */
-            }
-
-            // inject table
-            document.querySelector(".climate-table-container").appendChild(table);
-
-            // change cell color based on data-value
-            var cells = document.querySelectorAll(".climate-table td");
-            for (var i = 0; i < cells.length; i++) {
-                var cell = cells[i];
-                var value = cell.getAttribute("data-value");
-                // add class in increments of 10, from -10 to 40
-                var class_name = "";
-                if (value < 0) {
-                    class_name = "color-temp-freezing";
-                } else if (value < 10) {
-                    class_name = "color-temp-cold";
-                } else if (value < 20) {
-                    class_name = "color-temp-mild";
-                } else if (value < 30) {
-                    class_name = "color-temp-warm";
-                } else {
-                    class_name = "color-temp-hot";
-                }
-                cell.classList.add(class_name);
-            }
-
-            // colors from https://en.wikipedia.org/wiki/Module:Weather_box/colors
-
-            function hex(value) {
-                //let hex = value.toString(16);
-
-                var hex = roundDblDigitHex(value);
-
-                if ((hex.length % 2) > 0) {
-                    hex = "0" + hex;
-                }
-
-                return hex;
-            }
-
-            function roundDblDigitHex(x) {
-                x = Math.round(x);
-                if (x < 0) x = 0;
-                if (x > 255) x = 255;
-                x = x.toString(16);
-                if (x.length === 1) x = '0' + x;
-                return x;
-            }
-
-            function format_line(background, text_color) {
-                return "background: #" + background + "; color:#" + text_color + ";";
-            }
-
-            function range_pos(value, start, stop) {
-                if (start < stop) {
-                    if (value < start) {
-                        return 0;
-                    } else if (value > stop) {
-                        return 1;
-                    } else {
-                        return (value - start) / (stop - start);
-                    }
-                } else {
-                    if (value < stop) {
-                        return 1;
-                    } else if (value > start) {
-                        return 0;
-                    } else {
-                        return (start - value) / (start - stop);
-                    }
-                }
-            }
-
-            function color_temperature(value) {
-                var item, background, text_color;
-
-                if (value < 4.5) {
-                    item = range_pos(value, -42.75, 4.5) * 255;
-                    background = hex(item);
-                } else {
-                    item = range_pos(value, 60, 41.5) * 255;
-                    background = hex(item);
-                }
-
-                if (value <= 4.5) {
-                    item = range_pos(value, -42.75, 4.5) * 255;
-                    background = background + hex(item);
-                } else {
-                    item = range_pos(value, 41.5, 4.5) * 255;
-                    background = background + hex(item);
-                }
-
-                if (value < -42.78) {
-                    item = range_pos(value, -90, -42.78) * 255;
-                    background = background + hex(item);
-                } else {
-                    item = range_pos(value, 23, 4.5) * 255;
-                    background = background + hex(item);
-                }
-
-                if (value < -23.3 || value >= 37.8) {
-                    text_color = "FFFFFF";
-                } else {
-                    text_color = "000000";
-                }
-
-                return format_line(background, text_color);
-            }
-
-            // change cell color based on data-value
-            var cells = document.querySelectorAll(".climate-table td");
-
-            for (var i = 0; i < cells.length; i++) {
-                var cell = cells[i];
-                var value = cell.getAttribute("data-value");
-                var color = color_temperature(value);
-                cell.setAttribute("style", color);
-            }
-        });
+    if (station.aemet_id) {
+        loadTable(station.aemet_id);
     }
 }
 
@@ -238,5 +256,96 @@ function error(err) {
 
 grabData("./data/aemet-stations-clean.json").then(function (data) {
     station_data = data;
-    navigator.geolocation.getCurrentPosition(success, error, options);
+
+    // get random aemet_id
+    var random_station = station_data[Math.floor(Math.random() * station_data.length)];
+    loadTable(random_station.aemet_id);
+
+    // ADD SELECTORS
+    var select;
+
+    // create select field and populate with unique region
+    select = document.createElement("select");
+    select.classList.add("select-region");
+    var option = document.createElement("option");
+    option.innerHTML = "Selecciona una región";
+    option.setAttribute("value", "");
+    select.appendChild(option);
+    for (var i = 0; i < station_data.length; i++) {
+        var region = station_data[i].region;
+        // check if region already exists
+        var option_exists = false;
+        for (var j = 0; j < select.options.length; j++) {
+            if (select.options[j].value === region) {
+                option_exists = true;
+            }
+        }
+
+        if (!option_exists) {
+            var option = document.createElement("option");
+            option.innerHTML = region;
+            option.setAttribute("value", region);
+            select.appendChild(option);
+        }
+    }
+    
+    document.querySelector(".station-select-container").appendChild(select);
+
+    // create select field and populate with stations
+    select = document.createElement("select");
+    select.classList.add("station-select");
+    var option = document.createElement("option");
+    option.innerHTML = "Selecciona una estación";
+    option.setAttribute("value", "");
+    select.appendChild(option);
+    for (var i = 0; i < station_data.length; i++) {
+        var option = document.createElement("option");
+        option.innerHTML = station_data[i].name;
+        option.setAttribute("value", station_data[i].aemet_id);
+        select.appendChild(option);
+    }
+    document.querySelector(".station-select-container").appendChild(select);
+
+    // filter stations based on region
+    document.querySelector(".select-region").addEventListener("change", function () {
+        var region = document.querySelector(".select-region").value;
+        var station_select = document.querySelector(".station-select");
+        station_select.innerHTML = "";
+        var option = document.createElement("option");
+        option.innerHTML = "Selecciona una estación";
+        option.setAttribute("value", "");
+        station_select.appendChild(option);
+        for (var i = 0; i < station_data.length; i++) {
+            if (station_data[i].region === region) {
+                var option = document.createElement("option");
+                option.innerHTML = station_data[i].name;
+                option.setAttribute("value", station_data[i].aemet_id);
+                station_select.appendChild(option);
+            }
+        }
+    }
+    );
+
+    sortSelectors();
+
+    // load table based on station
+    document.querySelector(".station-select").addEventListener("change", function () {
+        var station_id = document.querySelector(".station-select").value;
+
+        loadTable(station_id);
+    });
+
+    if ("geolocation" in navigator) {
+        // add button to get user location
+        var button = document.createElement("button");
+        button.classList.add("get-location");
+        button.innerHTML = "Obtener mi ubicación";
+
+        button.addEventListener("click", function () {
+            navigator.geolocation.getCurrentPosition(success, error, options);
+        });
+
+        document.querySelector(".station-select-container").appendChild(button);
+    }
+
 });

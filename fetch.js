@@ -37,15 +37,27 @@ function parseCoordinates(input) {
     return dd.toFixed(4);
 }
 
-/* store file in variable */
+/* CLEAN STATION LIST */
 var data_stations = jsonfile.readFileSync(file_stations);
-/* iterate over data */
-for (var i = 0; i < data_stations.length; i++) {
-    data_stations[i].lat = parseCoordinates(data_stations[i].latitud);
-    data_stations[i].lon = parseCoordinates(data_stations[i].longitud);
-}
-jsonfile.writeFileSync('./data/aemet-stations-clean.json', data_stations, { spaces: 2 });
+var data_stations_clean = [];
 
+for (var i = 0; i < data_stations.length; i++) {
+    var station = {
+        aemet_id: data_stations[i].indicativo,
+        name: data_stations[i].nombre,
+        region: data_stations[i].provincia,
+        lat: parseCoordinates(data_stations[i].latitud),
+        lon: parseCoordinates(data_stations[i].longitud),
+        // altitude: data_stations[i].altitud
+    }
+    
+    data_stations_clean.push(station);
+}
+jsonfile.writeFileSync('./data/aemet-stations-clean.json', data_stations_clean);
+
+data_stations = data_stations_clean;
+
+/* CLEAN CLIMATE DATA */
 var data = jsonfile.readFileSync(file_climate);
 var clean_data = [];
 
@@ -68,12 +80,8 @@ jsonfile.writeFileSync('./data/aemet-climate-clean.json', clean_data, { spaces: 
 console.log(clean_data);
 
 /* ORDERED DATA */
-
-/* iterate over data */
 data = clean_data;
 var ordered_data = [];
-
-// data.length
 
 for (var i = 0; i < data.length; i++) {
     aemet_id = data[i].aemet_id;
@@ -90,11 +98,8 @@ for (var i = 0; i < data.length; i++) {
         
         /* get station data */
         for (var j = 0; j < data_stations.length; j++) {
-            if (item.aemet_id == data_stations[j].indicativo) {
-                item.name = data_stations[j].nombre;
-                item.region = data_stations[j].provincia;
-                item.lat = data_stations[j].lat;
-                item.lon = data_stations[j].lon;
+            if (item.aemet_id == data_stations[j].aemet_id) {
+                item = Object.assign({}, data_stations[j]);
 
                 item.records = {};
                 item.averages = {};
@@ -136,7 +141,7 @@ for (var i = 0; i < ordered_data.length; i++) {
         var month_string = month.toString();
         var records = station_item.records.temp_max[month_string];
 
-        if (records.length > 0) {
+        if (records.length >= 10) {
             // CALCULATE AVERAGE
             var values = [];
             for (var k = 0; k < records.length; k++) {
@@ -169,12 +174,20 @@ for (var i = 0; i < ordered_data.length; i++) {
     }
 }
 
-/* store clean data in json file */
-jsonfile.writeFileSync('./data/aemet-climate-ordered.json', ordered_data, { spaces: 2 });
-
 // save for each station
 for (var i = 0; i < ordered_data.length; i++) {
     var station_item = ordered_data[i];
     var file_name = './data/stations/' + station_item.aemet_id + '.json';
     jsonfile.writeFileSync(file_name, station_item, { spaces: 0 });
 }
+
+// remove from stations-clean if there's no file
+for (var i = 0; i < data_stations_clean.length; i++) {
+    var station_item = data_stations_clean[i];
+    var file_name = './data/stations/' + station_item.aemet_id + '.json';
+    if (!fs.existsSync(file_name)) {
+        data_stations_clean.splice(i, 1);
+    }
+}
+
+jsonfile.writeFileSync('./data/aemet-stations-clean.json', data_stations_clean, { spaces: 2 });
