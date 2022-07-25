@@ -21,8 +21,8 @@ table {
 th, td {
     width: 50px;
     text-align: center;
-    border: 1px solid black;
-    padding: .2rem .4rem;
+    border: 2px solid white;
+    padding: .4rem .4rem;
 }
 
 th:first-child {

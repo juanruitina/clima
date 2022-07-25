@@ -2,10 +2,10 @@
   "name": "clima-pro",
   "version": "1.0.0",
   "description": "## Procesar datos",
-  "main": "script.js",
+  "main": "fetch.js",
   "scripts": {
-    "start": "node script.js",
-    "process": "node script.js",
+    "start": "node fetch.js",
+    "process": "node fetch.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
