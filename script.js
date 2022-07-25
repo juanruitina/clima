@@ -2,6 +2,8 @@
 var fs = require('fs');
 var path = require('path');
 var jsonfile = require('jsonfile');
+var ss = require('simple-statistics');
+
 var file_climate = './data/aemet-climate.json';
 var file_stations = './data/aemet-stations.json';
 
@@ -9,9 +11,9 @@ var file_stations = './data/aemet-stations.json';
 function fill_months() {
     var month_array = {};
 
-    for (var i = 1; i <= 12; i++) {
+    for (var i = 1; i <= 13; i++) {
         var month = i.toString();
-        month_array[month] = {};
+        month_array[month] = [];
     }
 
     return month_array;
@@ -93,11 +95,16 @@ for (var i = 0; i < data.length; i++) {
                 item.region = data_stations[j].provincia;
                 item.lat = data_stations[j].lat;
                 item.lon = data_stations[j].lon;
-                item.data = {};
 
-                values = ['temp_max', 'temp_min'];
+                item.records = {};
+                item.averages = {};
+                item.projection_linear = {};
+
+                values = ['temp_max'];
                 for (var k = 0; k < values.length; k++) {
-                    item.data[values[k]] = [];
+                    item.records[values[k]] = fill_months();
+                    item.averages[values[k]] = fill_months();
+                    item.projection_linear[values[k]] = fill_months();
                 }
 
                 break;
@@ -113,18 +120,52 @@ for (var i = 0; i < data.length; i++) {
     var date = data[i].date.split('-');
     var year = date[0];
     var month = date[1];
+    var month_string = month.toString();
 
-    if ( month < 13 ) {
-        station_item.data.temp_max.push({
-            year: year,
-            month: month,
-            value: data[i].tm_max
-        })
-        station_item.data.temp_min.push({
-            year: year,
-            month: month,
-            value: data[i].tm_min
-        })
+    var record = [year, data[i].tm_max];
+    
+    if (station_item.records.temp_max[month_string] ) {
+        station_item.records.temp_max[month_string].push(record);
+    }
+}
+
+for (var i = 0; i < ordered_data.length; i++) {
+    var station_item = ordered_data[i];
+    for (var j = 1; j <= 13; j++) {
+        var month = j;
+        var month_string = month.toString();
+        var records = station_item.records.temp_max[month_string];
+
+        if (records.length > 0) {
+            // CALCULATE AVERAGE
+            var values = [];
+            for (var k = 0; k < records.length; k++) {
+                values.push( parseFloat( records[k][1] ) );
+            }
+
+            var average = ss.mean(values);
+            station_item.averages.temp_max[month_string] = average.toFixed(1);
+
+            // CALCULATE LINEAR REGRESSION
+            // turn records into array of [x, y]
+            var xy = [];
+            for (var k = 0; k < records.length; k++) {
+                xy.push([parseInt(records[k][0]), parseFloat( records[k][1] )]);
+            }
+
+            var linearRegressionObject = ss.linearRegression(xy);
+            var slope = linearRegressionObject.m;
+            var intercept = linearRegressionObject.b;
+
+            function project_linear(year) {
+                var value = slope * year + intercept;
+                return value.toFixed(1);
+            }
+
+            var current_year = new Date().getFullYear();
+
+            station_item.projection_linear.temp_max[month_string] = project_linear(current_year);
+        }
     }
 }
 
@@ -135,8 +176,5 @@ jsonfile.writeFileSync('./data/aemet-climate-ordered.json', ordered_data, { spac
 for (var i = 0; i < ordered_data.length; i++) {
     var station_item = ordered_data[i];
     var file_name = './data/stations/' + station_item.aemet_id + '.json';
-    jsonfile.writeFileSync(file_name, station_item, { spaces: 2 });
+    jsonfile.writeFileSync(file_name, station_item, { spaces: 0 });
 }
-
-//sconsole.log(ordered_data);
-

@@ -10,7 +10,7 @@
         // array of months in Spanish
         //var months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         // abbreviations
-        var months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+        var months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic", "Media"];
 
         // https://stackoverflow.com/questions/24791010/how-to-find-the-coordinate-that-is-closest-to-the-point-of-origin
         
@@ -69,34 +69,11 @@
             // show closest station
             document.querySelector(".closest-station").innerHTML += `${station.nombre}`;
 
+            // station.indicativo = 3195;
+
             if ( station.indicativo ) {
                 var path = "./data/stations/" + station.indicativo + ".json"
                 grabData(path).then( function(climate_data) {
-
-                    // iterate over months and calculate average
-                    var data_array = {};
-                    for (var i = 0; i < climate_data.data.temp_max.length; i++) {
-                        var month = climate_data.data.temp_max[i].month;
-                        var value = parseFloat(climate_data.data.temp_max[i].value);
-                        
-                        if ( !data_array[month] ) {
-                            data_array[month] = [];
-                        }
-
-                        data_array[month].push(value);
-                    }
-
-                    for (var month in data_array) {
-                        var average = 0;
-                        for (var i = 0; i < data_array[month].length; i++) {
-                            average += data_array[month][i];
-                        }
-                        average = average / data_array[month].length;
-                        data_array[month] = average.toFixed(1);
-                    }
-
-                    console.log(data_array)
-
                     // create table
                     var table = document.createElement("table");
                     table.classList.add("climate-table");
@@ -110,27 +87,66 @@
                     var table_header_cell = document.createElement("th");
                     table_header_cell.innerHTML = "Mes";
                     table_header.appendChild(table_header_cell);
+
                     // add one column per month
                     for (var i = 0; i < months.length; i++) {
                         var table_header_cell = document.createElement("th");
                         table_header_cell.innerHTML = months[i];
                         table_header.appendChild(table_header_cell);
                     }
-                    // add one row for max temperatures
+
+                    // PROJECTIONS
                     var table_row = document.createElement("tr");
                     table_row.classList.add("climate-table-row");
                     table_body.appendChild(table_row);
                     var table_row_cell = document.createElement("th");
-                    table_row_cell.innerHTML = "Máximas";
+                    table_row_cell.innerHTML = "Temperatura máxima media (estimada)";
                     table_row.appendChild(table_row_cell);
+
                     // add one column per month
                     for (var i = 0; i < months.length; i++) {
                         var table_row_cell = document.createElement("td");
-                        table_row_cell.innerHTML = data_array[i + 1];
+                        table_row_cell.innerHTML = climate_data.projection_linear.temp_max[i + 1];
                         table_row.appendChild(table_row_cell);
                     }
 
-                    // inject tabel
+                    // AVERAGES
+                    var table_row = document.createElement("tr");
+                    table_row.classList.add("climate-table-row");
+                    table_body.appendChild(table_row);
+                    var table_row_cell = document.createElement("th");
+                    table_row_cell.innerHTML = "Temperatura máxima media (media 30 años)";
+                    table_row.appendChild(table_row_cell);
+
+                    // add one column per month
+                    for (var i = 0; i < months.length; i++) {
+                        var table_row_cell = document.createElement("td");
+                        table_row_cell.innerHTML = climate_data.averages.temp_max[i + 1];
+                        table_row.appendChild(table_row_cell);
+                    }
+
+                    // DIFFERENCE
+                    var table_row = document.createElement("tr");
+                    table_row.classList.add("climate-table-row");
+                    table_body.appendChild(table_row);
+                    var table_row_cell = document.createElement("th");
+                    table_row_cell.innerHTML = "Diferencia (estimada - media)";
+                    table_row.appendChild(table_row_cell);
+
+                    for (var i = 0; i < months.length; i++) {
+                        var table_row_cell = document.createElement("td");
+                        var difference = climate_data.projection_linear.temp_max[i + 1] - climate_data.averages.temp_max[i + 1];
+                        difference = difference.toFixed(1);
+
+                        if ( difference > 0 ) {
+                            difference = "+" + difference;
+                        }
+
+                        table_row_cell.innerHTML = difference;
+                        table_row.appendChild(table_row_cell);
+                    }
+
+                    // inject table
                     document.querySelector(".climate-table-container").appendChild(table);
 
                 });
