@@ -19,6 +19,54 @@ function fill_months() {
     return month_array;
 }
 
+function sentenceCase(str) {
+    var words = str.split(' ');
+    for (var i = 0; i < words.length; i++) {
+        var word = words[i].toLowerCase();
+
+        var lowercase_words = ["a", "de", "el", "la", "los", "las", "del", "esquí"];
+
+        // word not in lowercase_words
+        if (i == 0 || lowercase_words.indexOf(word) == -1) {
+            word = word.charAt(0).toUpperCase() + word.slice(1);
+        }
+
+        words[i] = word;
+    }
+
+    // make character next to hyphen uppercase
+    for (var i = 0; i < words.length; i++) {
+        var word = words[i];
+        if ( word.indexOf('-') != -1 ) {
+            var word_array = word.split('-');
+            for (var j = 0; j < word_array.length; j++) {
+                var word = word_array[j];
+                word = word.charAt(0).toUpperCase() + word.slice(1);
+                word_array[j] = word;
+            }
+            words[i] = word_array.join('-');
+        }
+    }
+
+    // make character next to slash uppercase
+    for (var i = 0; i < words.length; i++) {
+        var word = words[i];
+        if (word.indexOf('/') != -1) {
+            var word_array = word.split('/');
+            for (var j = 0; j < word_array.length; j++) {
+                var word = word_array[j];
+                word = word.charAt(0).toUpperCase() + word.slice(1);
+                word_array[j] = word;
+            }
+            words[i] = word_array.join('/');
+        }
+    }
+
+    words = words.join(' ');
+
+    return words;
+}
+
 // from coordinates to decimal
 function parseCoordinates(input) {
     var parts = input.match(/.{1,2}/g);
@@ -44,8 +92,8 @@ var data_stations_clean = [];
 for (var i = 0; i < data_stations.length; i++) {
     var station = {
         aemet_id: data_stations[i].indicativo,
-        name: data_stations[i].nombre,
-        region: data_stations[i].provincia,
+        name: sentenceCase(data_stations[i].nombre),
+        region: sentenceCase(data_stations[i].provincia),
         lat: parseCoordinates(data_stations[i].latitud),
         lon: parseCoordinates(data_stations[i].longitud),
         // altitude: data_stations[i].altitud
@@ -170,23 +218,34 @@ for (var i = 0; i < ordered_data.length; i++) {
             var current_year = new Date().getFullYear();
 
             station_item.projection_linear.temp_max[month_string] = project_linear(current_year);
+        } else if ( j < 13 ) {
+            // drop station
+            ordered_data.splice(i, 1);
+            i--;
+            break;
         }
     }
+}
+
+var dir = './data/stations';
+if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir);
 }
 
 // save for each station
 for (var i = 0; i < ordered_data.length; i++) {
     var station_item = ordered_data[i];
-    var file_name = './data/stations/' + station_item.aemet_id + '.json';
+    var file_name = dir + '/' + station_item.aemet_id + '.json';
     jsonfile.writeFileSync(file_name, station_item, { spaces: 0 });
 }
 
 // remove from stations-clean if there's no file
 for (var i = 0; i < data_stations_clean.length; i++) {
     var station_item = data_stations_clean[i];
-    var file_name = './data/stations/' + station_item.aemet_id + '.json';
-    if (!fs.existsSync(file_name)) {
+    var file_name = dir + '/' + station_item.aemet_id + '.json';
+    if ( !fs.existsSync(file_name) ) {
         data_stations_clean.splice(i, 1);
+        i--;
     }
 }
 

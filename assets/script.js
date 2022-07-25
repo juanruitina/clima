@@ -69,6 +69,8 @@ function sortSelectors() {
 }
 
 function loadTable(aemet_id) {
+    document.querySelector(".loading-alert").classList.remove("hidden")
+
     var path = "./data/stations/" + aemet_id + ".json"
     grabData(path).then(function (climate_data) {
         document.querySelector(".station").innerHTML = `Estación: ${climate_data.name} · ${climate_data.region} · ID: ${climate_data.aemet_id}`;
@@ -107,19 +109,25 @@ function loadTable(aemet_id) {
             var table_row_cell = document.createElement("td");
             
             var value = climate_data.projection_linear.temp_max[i + 1];
-            var difference = climate_data.projection_linear.temp_max[i + 1] - climate_data.averages.temp_max[i + 1];
 
-            table_row_cell.innerHTML = value;
-            table_row_cell.setAttribute("data-value", value);
-            table_row.appendChild(table_row_cell);
+            if ( value && value != "" ) {
+                var difference = climate_data.projection_linear.temp_max[i + 1] - climate_data.averages.temp_max[i + 1];
 
-            difference = difference.toFixed(1);
+                table_row_cell.innerHTML = value;
+                table_row_cell.setAttribute("data-value", value);
 
-            if (difference > 0) {
-                difference = "+" + difference;
+                difference = difference.toFixed(1);
+
+                if (difference > 0) {
+                    difference = "+" + difference;
+                }
+
+                table_row_cell.innerHTML += `<span class="difference"><span class="sr-only">, Difference: </span>${difference}</span>`;
+            } else {
+                table_row_cell.innerHTML = "N/A";
             }
 
-            table_row_cell.innerHTML += `<span class="difference"><span class="sr-only">, Difference: </span>${difference}</span>`;
+            table_row.appendChild(table_row_cell);
         }
 
         // remove table
@@ -218,12 +226,14 @@ function loadTable(aemet_id) {
             var cell = cells[i];
             var value = cell.getAttribute("data-value");
             
-            if (value != "") {
+            if (value && value != "") {
                 var color = color_temperature(value);
                 cell.setAttribute("style", color);
             } 
         }
     });
+
+    document.querySelector(".loading-alert").classList.add("hidden")
 }
 
 function success(pos) {
