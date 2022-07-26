@@ -46,16 +46,16 @@ function sortSelectors() {
 
         for (i = 1; i < cl.length; i++) {
             clTexts[i - 1] =
-                cl.options[i].text.toUpperCase() + "," +
-                cl.options[i].text + "," +
-                cl.options[i].value + "," +
+                cl.options[i].text.toUpperCase() + ";" +
+                cl.options[i].text + ";" +
+                cl.options[i].value + ";" +
                 cl.options[i].selected;
         }
 
         clTexts.sort();
 
         for (i = 1; i < cl.length; i++) {
-            var parts = clTexts[i - 1].split(',');
+            var parts = clTexts[i - 1].split(';');
 
             cl.options[i].text = parts[1];
             cl.options[i].value = parts[2];
@@ -124,7 +124,7 @@ function loadTable(aemet_id) {
 
                 table_row_cell.innerHTML += `<span class="difference"><span class="sr-only">, Difference: </span>${difference}</span>`;
             } else {
-                table_row_cell.innerHTML = "N/A";
+                table_row_cell.innerHTML = "?";
             }
 
             table_row.appendChild(table_row_cell);
@@ -268,8 +268,12 @@ grabData("./data/aemet-stations-clean.json").then(function (data) {
     station_data = data;
 
     // get random aemet_id
-    var random_station = station_data[Math.floor(Math.random() * station_data.length)];
-    loadTable(random_station.aemet_id);
+    function randomStation() {
+        var random_station = station_data[Math.floor(Math.random() * station_data.length)];
+        loadTable(random_station.aemet_id);
+    }
+
+    randomStation();
 
     // ADD SELECTORS
     var select;
@@ -358,4 +362,13 @@ grabData("./data/aemet-stations-clean.json").then(function (data) {
         document.querySelector(".station-select-container").appendChild(button);
     }
 
+    // add button to get random station
+    var button = document.createElement("button");
+    button.classList.add("get-random");
+    button.innerHTML = "Obtener estación aleatoria";
+    document.querySelector(".station-select-container").appendChild(button);
+    
+    button.addEventListener("click", function () {
+        randomStation();
+    });
 });

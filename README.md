@@ -11,6 +11,14 @@ npm install
 npm run process
 ```
 
+## Obtener API key
+
+Clima.pro utiliza la API de la AEMET, la Agencia Estatal de Meteorología de España. [Obtener clave de la API](https://opendata.aemet.es/centrodedescargas/altaUsuario)
+
+```
+export API_KEY_AEMET=[API key facilitada por AEMET]
+```
+
 # Ejemplo
 
 Madrid Retiro: 3195

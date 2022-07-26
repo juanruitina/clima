@@ -13,6 +13,7 @@
   "dependencies": {
     "fs": "0.0.1-security",
     "jsonfile": "^6.1.0",
+    "node-fetch": "^2.6.7",
     "path": "^0.12.7",
     "simple-statistics": "^7.7.5"
   },
