@@ -88,11 +88,10 @@ function parseCoordinates(input) {
     return dd.toFixed(4);
 }
 
-function processData() {
+function processData(data_stations, data_climate) {
     /* CLEAN STATION LIST */
     console.log("Cleaning station data...");
 
-    var data_stations = jsonfile.readFileSync(file_stations);
     var data_stations_clean = [];
 
     for (var i = 0; i < data_stations.length; i++) {
@@ -108,14 +107,14 @@ function processData() {
         data_stations_clean.push(station);
     }
 
-    jsonfile.writeFileSync('./data/aemet-stations-clean.json', data_stations_clean);
+    jsonfile.writeFileSync('./data/aemet-stations.json', data_stations_clean);
 
     data_stations = data_stations_clean;
 
     /* CLEAN CLIMATE DATA */
     console.log("Cleaning climate data...");
 
-    var data = jsonfile.readFileSync(file_climate);
+    var data = data_climate;
     var clean_data = [];
 
     /* iterate over data */
@@ -132,7 +131,7 @@ function processData() {
     }
 
     /* store clean data in json file */
-    jsonfile.writeFileSync('./data/aemet-climate-clean.json', clean_data, { spaces: 2 });
+    // jsonfile.writeFileSync('./data/aemet-climate.json', clean_data, { spaces: 2 });
 
     /* ORDERED DATA */
     console.log("Joining station and climate data...");
@@ -261,7 +260,7 @@ function processData() {
         }
     }
 
-    jsonfile.writeFileSync('./data/aemet-stations-clean.json', data_stations_clean, { spaces: 2 });
+    jsonfile.writeFileSync('./data/aemet-stations.json', data_stations_clean, { spaces: 2 });
     console.log("Complete!");
 }
 
@@ -284,14 +283,14 @@ fetch(stations_request)
 
             fetch(json.datos)
                 .then(res => res.json())
-                .then(function(data_json) {
+                .then(data_stations => {
                     // store data_json in file
                     var dir = './data';
                     if (!fs.existsSync(dir)) {
                         fs.mkdirSync(dir);
                     }
 
-                    fs.writeFileSync('./data/aemet-stations.json', JSON.stringify(data_json, null, 2), 'utf8');
+                    fs.writeFileSync('./data/aemet-stations.json', JSON.stringify(data_stations, null, 2), 'utf8');
 
                     console.log("Requesting climate data...");
 
@@ -303,17 +302,11 @@ fetch(stations_request)
 
                                 fetch(json.datos)
                                     .then(res => res.json())
-                                    .then(data_json => {
-                                        // store data_json in file
-                                        var dir = './data';
-                                        if (!fs.existsSync(dir)) {
-                                            fs.mkdirSync(dir);
-                                        }
-
-                                        fs.writeFileSync('./data/aemet-climate.json', JSON.stringify(data_json, null, 2), 'utf8');
+                                    .then(data_climate => {
+                                        // fs.writeFileSync('./data/aemet-climate.json', JSON.stringify(data_json, null, 2), 'utf8');
 
                                         console.log("Processing data...");
-                                        processData();
+                                        processData(data_stations, data_climate);
                                     });
                             }
                         });
