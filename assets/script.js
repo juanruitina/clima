@@ -264,7 +264,7 @@ function error(err) {
     console.warn(`ERROR(${err.code}): ${err.message}`);
 }
 
-grabData("./data/aemet-stations-clean.json").then(function (data) {
+grabData("./data/aemet-stations.json").then(function (data) {
     station_data = data;
 
     // get random aemet_id
