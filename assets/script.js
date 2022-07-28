@@ -122,7 +122,7 @@ function loadTable(aemet_id) {
                     difference = "+" + difference;
                 }
 
-                table_row_cell.innerHTML += `<span class="difference"><span class="sr-only">, Difference: </span>${difference}</span>`;
+                table_row_cell.innerHTML += `<span class="difference"><span class="sr-only">, diferencia: </span>${difference}</span>`;
             } else {
                 table_row_cell.innerHTML = "?";
             }
@@ -282,7 +282,7 @@ grabData("./data/aemet-stations.json").then(function (data) {
     select = document.createElement("select");
     select.classList.add("select-region");
     var option = document.createElement("option");
-    option.innerHTML = "Selecciona una región";
+    option.innerHTML = "Selecciona una provincia";
     option.setAttribute("value", "");
     select.appendChild(option);
     for (var i = 0; i < station_data.length; i++) {
