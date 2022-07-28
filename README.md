@@ -6,17 +6,16 @@ Ten en cuenta que el calientamiento global no es un proceso lineal, por lo que l
 
 ## Procesar datos
 
-Antes de 
-```
-npm install
-npm run process
-```
+Para poder obtener y procesar los datos climatológicos, asegúrate de instalar primero todas las dependencias: `npm install`
 
-Para desplegar el proyecto en un proveedor de sitios estáticos, configúralo para que ejecute simplemente `npm start`.
+- `npm start`: obtiene y procesa los datos y guarda solo los estrictamente necesarios en `/data`.
+- `npm run cache`: obtiene y procesa los datos y guarda todos los archivos, incluido la respuesta tal cual es facilitada por la AEMET. Ten en cuenta que la respuesta puede pesar más de 50 MB.
+
+Para desplegar el proyecto en un proveedor de sitios estáticos como Cloudflare Pages, Netlify o Vercel, configúralo para que ejecute simplemente `npm start`.
 
 ## API de AEMET
 
-Clima.pro utiliza la API de la AEMET, la Agencia Estatal de Meteorología de España, para obtener los datos de cada estación meteorológica y los datos mensuales con los que se calcula la tendencia.
+Clima.pro utiliza la [API de la AEMET](https://opendata.aemet.es/centrodedescargas/inicio), la Agencia Estatal de Meteorología de España, para obtener los datos de cada estación meteorológica y los datos mensuales con los que se calcula la tendencia.
 
 Puedes [obtener la clave de la API](https://opendata.aemet.es/centrodedescargas/altaUsuario) de forma gratuita.
 

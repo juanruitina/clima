@@ -1,22 +1,21 @@
 {
   "name": "clima-pro",
   "version": "1.0.0",
-  "description": "## Procesar datos",
+  "description": "Get actual climate data that accounts for climate change",
   "main": "fetch.js",
   "scripts": {
     "start": "node fetch.js",
     "process": "node fetch.js",
+    "cache": "node fetch.js cache",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Juan Ruitiña",
+  "license": "GPL-3.0",
   "dependencies": {
     "fs": "0.0.1-security",
-    "jsonfile": "^6.1.0",
     "node-fetch": "^2.6.7",
     "path": "^0.12.7",
     "simple-statistics": "^7.7.5"
   },
-  "devDependencies": {},
   "keywords": []
 }
