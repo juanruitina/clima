@@ -97,38 +97,45 @@ function loadTable(aemet_id) {
         }
 
         // PROJECTIONS
-        var table_row = document.createElement("tr");
-        table_row.classList.add("climate-table-row");
-        table_body.appendChild(table_row);
-        var table_row_cell = document.createElement("th");
-        table_row_cell.innerHTML = "Temp. máx. media (°C)";
-        table_row.appendChild(table_row_cell);
+        function addRow(metric, label, show_difference = true) {
+            var table_row = document.createElement("tr");
+            table_row.classList.add("climate-table-row", "climate-table-row-" + metric);
+            table_body.appendChild(table_row);
+            var table_row_cell = document.createElement("th");
+            table_row_cell.innerHTML = label;
+            table_row.appendChild(table_row_cell);
 
-        // add one column per month
-        for (var i = 0; i < months.length; i++) {
-            var table_row_cell = document.createElement("td");
-            
-            var value = climate_data.projection_linear.temp_max[i + 1];
+            // add one column per month
+            for (var i = 0; i < months.length; i++) {
+                var table_row_cell = document.createElement("td");
 
-            if ( value && value != "" ) {
-                var difference = climate_data.projection_linear.temp_max[i + 1] - climate_data.averages.temp_max[i + 1];
+                var value = climate_data.projection_linear[metric][i + 1];
+                
+                if (value && value != "") {
+                    var difference = climate_data.projection_linear[metric][i + 1] - climate_data.averages[metric][i + 1];
 
-                table_row_cell.innerHTML = value;
-                table_row_cell.setAttribute("data-value", value);
+                    table_row_cell.innerHTML = value;
+                    table_row_cell.setAttribute("data-value", value);
 
-                difference = difference.toFixed(1);
+                    if (show_difference) {
+                        difference = difference.toFixed(1);
 
-                if (difference > 0) {
-                    difference = "+" + difference;
+                        if (difference > 0) {
+                            difference = "+" + difference;
+                        }
+
+                        table_row_cell.innerHTML += `<span class="difference"><span class="sr-only">, diferencia: </span>${difference}</span>`;
+                    }
+                } else {
+                    table_row_cell.innerHTML = "?";
                 }
 
-                table_row_cell.innerHTML += `<span class="difference"><span class="sr-only">, diferencia: </span>${difference}</span>`;
-            } else {
-                table_row_cell.innerHTML = "?";
+                table_row.appendChild(table_row_cell);
             }
-
-            table_row.appendChild(table_row_cell);
         }
+
+        addRow("temp_max", "Temp. máx. media (°C)");
+        addRow("temp_min", "Temp. mín. media (°C)");
 
         // remove table
         document.querySelector(".climate-table-container").innerHTML = "";

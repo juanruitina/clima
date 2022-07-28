@@ -1,12 +1,19 @@
 var fs = require('fs');
 var ss = require('simple-statistics');
 var fetch = require('node-fetch');
+const { exit } = require('process');
 
 var arg = process.argv[2];
 
 var current_year = new Date().getFullYear();
-var year_span = 5;
-var start_year = current_year - year_span;
+var last_year = current_year - 1;
+
+var year_span = 30;
+if ( process.argv[3] ) {
+    year_span = parseInt(process.argv[3]);
+}
+
+var start_year = last_year - year_span;
 var aemetApiKey = process.env.API_KEY_AEMET;
 
 /* fill object with month numbers as keys and null as value */
@@ -15,11 +22,12 @@ function fill_months() {
 
     for (var i = 1; i <= 13; i++) {
         var month = i.toString();
-        month_array[month] = [];
+        month_array[month] = {};
     }
 
     return month_array;
 }
+
 
 function sentenceCase(str) {
     var words = str.split(' ');
@@ -135,10 +143,10 @@ function processData(data_stations, data_climate) {
     }
 
     /* store clean data in json file */
-    if (arg == 'cache') {
+    if (arg == 'cache' || arg == 'dry') {
         fs.writeFileSync('data/aemet-climate-all.json', JSON.stringify(clean_data, null, 2));
     }
-
+    
     /* ORDERED DATA */
     console.log("Joining station and climate data...");
 
@@ -163,82 +171,93 @@ function processData(data_stations, data_climate) {
                 if (item.aemet_id == data_stations[j].aemet_id) {
                     item = Object.assign({}, data_stations[j]);
 
-                    item.records = {};
-                    item.averages = {};
-                    item.projection_linear = {};
+                    const sets = ['records', 'averages', 'projection_linear', 'projection_linear10', 'projection_linear30'];
 
-                    values = ['temp_max'];
-                    for (var k = 0; k < values.length; k++) {
-                        item.records[values[k]] = fill_months();
-                        item.averages[values[k]] = fill_months();
-                        item.projection_linear[values[k]] = fill_months();
-                    }
+                    for (var k = 0; k < sets.length; k++) {
+                        var set = sets[k];
 
+                        item[set] = {
+                            'temp_max': fill_months(),
+                            'temp_min': fill_months()
+                        }
+                    }                    
+                    ordered_data.push(item);
+
+                    index = ordered_data.length - 1;
                     break;
                 }
             }
-            ordered_data.push(item);
-            station_item = ordered_data[ordered_data.length - 1];
-        } else {
-            station_item = ordered_data[index];
         }
 
         /* add data to station */
         var date = data[i].date.split('-');
         var year = date[0];
         var month = date[1];
-        var month_string = month.toString();
 
-        var record = [year, data[i].tm_max];
-        
-        if (station_item.records.temp_max[month_string] ) {
-            station_item.records.temp_max[month_string].push(record);
+        var metrics = ['temp_max', 'temp_min'];
+
+        for (var m = 0; m < metrics.length; m++) {
+            var metric = metrics[m];
+            ordered_data[index].records[metric][month][year] = data[i].records[metric];
         }
+    }
+
+    /* store clean data in json file */
+    if (arg == 'cache' || arg == 'dry') {
+        fs.writeFileSync('./data/aemet-climate-ordered.json', JSON.stringify(ordered_data, null, 2));
     }
 
     console.log("Doing calculations...");
     for (var i = 0; i < ordered_data.length; i++) {
         var station_item = ordered_data[i];
-        for (var j = 1; j <= 13; j++) {
-            var month = j;
-            var month_string = month.toString();
-            var records = station_item.records.temp_max[month_string];
 
-            // Calculate only if data for at least 1/3 of the queried years (usually 10 years out of 30)
-            if (records.length >= year_span / 3) {
-                // CALCULATE AVERAGE
-                var values = [];
-                for (var k = 0; k < records.length; k++) {
-                    values.push( parseFloat( records[k][1] ) );
+        metrics.forEach(metric => {
+            var months = Object.keys(station_item.records[metric]);
+            months.forEach(month => {
+                var records = station_item.records[metric][month];
+                var years = Object.keys(records);
+
+                // Calculate only if data for at least 1/3 of the queried years (usually 10 years out of 30)
+                if (years.length >= year_span / 3) {
+                    // CALCULATE AVERAGE
+                    var values = [];
+
+                    for (year in records) {
+                        values.push(parseFloat(records[year]));
+                    }
+
+                    var average = ss.mean(values);
+                    station_item.averages[metric][month] = average;
+                    station_item.averages[metric][month] = average.toFixed(1);
+
+                    // CALCULATE LINEAR REGRESSION
+                    // turn records into array of [x, y]
+                    var xy = [];
+
+                    for (year in records) {
+                        xy.push([parseInt(year), parseFloat( records[year] )]);
+                    }
+
+                    var linearRegressionObject = ss.linearRegression(xy);
+                    var slope = linearRegressionObject.m;
+                    var intercept = linearRegressionObject.b;
+
+                    function project_linear(year) {
+                        var value = slope * year + intercept;
+                        return value.toFixed(1);
+                    }
+
+                    station_item.projection_linear[metric][month] = project_linear(current_year);
+                    station_item.projection_linear10[metric][month] = project_linear(current_year + 10);
+                    station_item.projection_linear30[metric][month] = project_linear(current_year + 30);
+                } else if (months.length < 13) {
+                    // drop station
+                    ordered_data.splice(i, 1);
+                    i--;
+                    // break;
                 }
-
-                var average = ss.mean(values);
-                station_item.averages.temp_max[month_string] = average.toFixed(1);
-
-                // CALCULATE LINEAR REGRESSION
-                // turn records into array of [x, y]
-                var xy = [];
-                for (var k = 0; k < records.length; k++) {
-                    xy.push([parseInt(records[k][0]), parseFloat( records[k][1] )]);
-                }
-
-                var linearRegressionObject = ss.linearRegression(xy);
-                var slope = linearRegressionObject.m;
-                var intercept = linearRegressionObject.b;
-
-                function project_linear(year) {
-                    var value = slope * year + intercept;
-                    return value.toFixed(1);
-                }
-
-                station_item.projection_linear.temp_max[month_string] = project_linear(current_year);
-            } else if ( j < 13 ) {
-                // drop station
-                ordered_data.splice(i, 1);
-                i--;
-                break;
-            }
-        }
+            });
+        });
     }
 
     var dir = './data/stations';
@@ -252,7 +271,7 @@ function processData(data_stations, data_climate) {
     for (var i = 0; i < ordered_data.length; i++) {
         var station_item = ordered_data[i];
         var file_name = dir + '/' + station_item.aemet_id + '.json';
-        fs.writeFileSync(file_name, JSON.stringify(station_item, null, 0));
+        fs.writeFileSync(file_name, JSON.stringify(station_item, null, 2));
     }
 
     // remove from stations-clean if there's no file
@@ -267,76 +286,82 @@ function processData(data_stations, data_climate) {
         }
     }
 
-    fs.writeFileSync('./data/aemet-stations.json', JSON.stringify(data_stations_clean, null, 2));
+    fs.writeFileSync('./data/aemet-stations.json', JSON.stringify(data_stations_clean, null, 0));
     console.log("Complete!");
 }
 
 var stations_request = 'https://opendata.aemet.es/opendata/api/valores/climatologicos/inventarioestaciones/todasestaciones/?api_key=' + aemetApiKey;
 
-var climate_request = 'https://opendata.aemet.es/opendata/api/valores/climatologicos/mensualesanuales/datos/anioini/' + start_year + '-01-01T00%3A00%3A00UTC/aniofin/' + current_year + '-06-01T00%3A00%3A00UTC/estacion/0000/?api_key=' + aemetApiKey;
+var climate_request = 'https://opendata.aemet.es/opendata/api/valores/climatologicos/mensualesanuales/datos/anioini/' + start_year + '-01-01T00%3A00%3A00UTC/aniofin/' + last_year + '-01-01T00%3A00%3A00UTC/estacion/0000/?api_key=' + aemetApiKey;
 
 console.log("Requesting station data...");
 
-fetch(stations_request)
-    .then(res => res.json())
-    .then(json => {
-        if (json.estado != '200') {      
-            console.error(json.descripcion);
-            process.exit(1);
-        }
-        
-        if (json.datos) {
-            console.log("Downloading station data...");
+if ( arg == "dry" ) {
+    var data_stations = JSON.parse(fs.readFileSync('./data/aemet-stations-raw.json'));
+    var data_climate = JSON.parse(fs.readFileSync('./data/aemet-climate-raw.json'));
+    processData(data_stations, data_climate);
+} else {   
+    fetch(stations_request)
+        .then(res => res.json())
+        .then(json => {
+            if (json.estado != '200') {      
+                console.error(json.descripcion);
+                process.exit(1);
+            }
+            
+            if (json.datos) {
+                console.log("Downloading station data...");
 
-            fetch(json.metadatos)
-                .then(res => res.json())
-                .then(json => {
-                    if (arg == 'cache') {
-                        fs.writeFileSync('./data/aemet-stations-metadata-raw.json', JSON.stringify(json, null, 2));
-                    }
-                });
-
-            fetch(json.datos)
-                .then(res => res.json())
-                .then(data_stations => {
-                    // store data_json in file
-                    var dir = './data';
-                    if (!fs.existsSync(dir)) {
-                        fs.mkdirSync(dir);
-                    }
-
-                    if (arg == 'cache') {
-                        fs.writeFileSync('./data/aemet-stations-raw.json', JSON.stringify(data_stations, null, 2), 'utf8');
-                    }
-
-                    console.log("Requesting climate data...");
-
-                    fetch(climate_request)
+                if (arg == 'cache') {
+                    fetch(json.metadatos)
                         .then(res => res.json())
                         .then(json => {
-                            if (json.datos) {
-                                console.log("Downloading climate data...");
+                                fs.writeFileSync('./data/aemet-stations-metadata-raw.json', JSON.stringify(json, null, 2));
+                            });
+                }
 
-                                fetch(json.metadatos)
-                                    .then(res => res.json())
-                                    .then(json => {
-                                        if (arg == 'cache') {
-                                            fs.writeFileSync('./data/aemet-climate-metadata-raw.json', JSON.stringify(json, null, 2));
-                                        }
-                                    });
+                fetch(json.datos)
+                    .then(res => res.json())
+                    .then(data_stations => {
+                        // store data_json in file
+                        var dir = './data';
+                        if (!fs.existsSync(dir)) {
+                            fs.mkdirSync(dir);
+                        }
 
-                                fetch(json.datos)
-                                    .then(res => res.json())
-                                    .then(data_climate => {
-                                        if (arg == 'cache') {
-                                            fs.writeFileSync('./data/aemet-climate-raw.json', JSON.stringify(data_climate, null, 2), 'utf8');
-                                        }
+                        if (arg == 'cache') {
+                            fs.writeFileSync('./data/aemet-stations-raw.json', JSON.stringify(data_stations, null, 2), 'utf8');
+                        }
 
-                                        console.log("Processing data...");
-                                        processData(data_stations, data_climate);
-                                    });
-                            }
-                        });
-                })
-        }
-    });
+                        console.log("Requesting climate data...");
+
+                        fetch(climate_request)
+                            .then(res => res.json())
+                            .then(json => {
+                                if (json.datos) {
+                                    console.log("Downloading climate data...");
+
+                                    if (arg == 'cache') {
+                                        fetch(json.metadatos)
+                                            .then(res => res.json())
+                                            .then(json => {
+                                                    fs.writeFileSync('./data/aemet-climate-metadata-raw.json', JSON.stringify(json, null, 2));
+                                                });
+                                    }
+                                            
+                                    fetch(json.datos)
+                                        .then(res => res.json())
+                                        .then(data_climate => {
+                                            if (arg == 'cache') {
+                                                fs.writeFileSync('./data/aemet-climate-raw.json', JSON.stringify(data_climate, null, 2), 'utf8');
+                                            }
+
+                                            console.log("Processing data...");
+                                            processData(data_stations, data_climate);
+                                        });
+                                }
+                            });
+                    })
+            }
+        });
+}

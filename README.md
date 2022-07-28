@@ -10,6 +10,8 @@ Para poder obtener y procesar los datos climatológicos, asegúrate de instalar 
 
 - `npm start`: obtiene y procesa los datos y guarda solo los estrictamente necesarios en `/data`.
 - `npm run cache`: obtiene y procesa los datos y guarda todos los archivos, incluido los datos tal cual son facilitados por la AEMET. Ten en cuenta que algunos de estos archivos pueden pesar más de 50 MB.
+  - `npm run cache [número]` para ajustar el número de años hasta el actual de los que quieres obtener datos (por defecto: 30).
+  - `npm run dry` para utilizar los archivos en caché, sin hacer peticiones a la API.
 
 Para desplegar el proyecto en un proveedor de sitios estáticos como Cloudflare Pages, Netlify o Vercel, configúralo para que ejecute simplemente `npm start`.
 

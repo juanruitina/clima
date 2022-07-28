@@ -5,8 +5,8 @@
   "main": "fetch.js",
   "scripts": {
     "start": "node fetch.js",
-    "process": "node fetch.js",
     "cache": "node fetch.js cache",
+    "dry": "node fetch.js dry",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Juan Ruitiña",
