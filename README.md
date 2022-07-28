@@ -9,7 +9,7 @@ Ten en cuenta que el calientamiento global no es un proceso lineal, por lo que l
 Para poder obtener y procesar los datos climatológicos, asegúrate de instalar primero todas las dependencias: `npm install`
 
 - `npm start`: obtiene y procesa los datos y guarda solo los estrictamente necesarios en `/data`.
-- `npm run cache`: obtiene y procesa los datos y guarda todos los archivos, incluido la respuesta tal cual es facilitada por la AEMET. Ten en cuenta que la respuesta puede pesar más de 50 MB.
+- `npm run cache`: obtiene y procesa los datos y guarda todos los archivos, incluido los datos tal cual son facilitados por la AEMET. Ten en cuenta que algunos de estos archivos pueden pesar más de 50 MB.
 
 Para desplegar el proyecto en un proveedor de sitios estáticos como Cloudflare Pages, Netlify o Vercel, configúralo para que ejecute simplemente `npm start`.
 

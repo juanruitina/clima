@@ -5,7 +5,8 @@ var fetch = require('node-fetch');
 var arg = process.argv[2];
 
 var current_year = new Date().getFullYear();
-var start_year = current_year - 30;
+var year_span = 5;
+var start_year = current_year - year_span;
 var aemetApiKey = process.env.API_KEY_AEMET;
 
 /* fill object with month numbers as keys and null as value */
@@ -124,8 +125,11 @@ function processData(data_stations, data_climate) {
             item = {};
             item.date = data[i].fecha;
             item.aemet_id = data[i].indicativo;
-            item.tm_min = data[i].tm_min;
-            item.tm_max = data[i].tm_max;
+
+            item.records = {};
+            item.records.temp_max = data[i].tm_max;
+            item.records.temp_min = data[i].tm_min;
+            
             clean_data.push(item);
         }
     }
@@ -200,7 +204,8 @@ function processData(data_stations, data_climate) {
             var month_string = month.toString();
             var records = station_item.records.temp_max[month_string];
 
-            if (records.length >= 10) {
+            // Calculate only if data for at least 1/3 of the queried years (usually 10 years out of 30)
+            if (records.length >= year_span / 3) {
                 // CALCULATE AVERAGE
                 var values = [];
                 for (var k = 0; k < records.length; k++) {
@@ -283,6 +288,14 @@ fetch(stations_request)
         if (json.datos) {
             console.log("Downloading station data...");
 
+            fetch(json.metadatos)
+                .then(res => res.json())
+                .then(json => {
+                    if (arg == 'cache') {
+                        fs.writeFileSync('./data/aemet-stations-metadata-raw.json', JSON.stringify(json, null, 2));
+                    }
+                });
+
             fetch(json.datos)
                 .then(res => res.json())
                 .then(data_stations => {
@@ -303,6 +316,14 @@ fetch(stations_request)
                         .then(json => {
                             if (json.datos) {
                                 console.log("Downloading climate data...");
+
+                                fetch(json.metadatos)
+                                    .then(res => res.json())
+                                    .then(json => {
+                                        if (arg == 'cache') {
+                                            fs.writeFileSync('./data/aemet-climate-metadata-raw.json', JSON.stringify(json, null, 2));
+                                        }
+                                    });
 
                                 fetch(json.datos)
                                     .then(res => res.json())
