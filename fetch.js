@@ -210,10 +210,17 @@ function processData(data_stations, data_climate) {
     console.log("Doing calculations...");
     for (var i = 0; i < ordered_data.length; i++) {
         var station_item = ordered_data[i];
+        var break_for = false;
 
-        metrics.forEach(metric => {
+        for (const metric of metrics) {
+
+            if ( break_for == true ) {
+                break;
+            }
+
             var months = Object.keys(station_item.records[metric]);
-            months.forEach(month => {
+
+            for (const month of months) {
                 var records = station_item.records[metric][month];
                 var years = Object.keys(records);
 
@@ -250,19 +257,21 @@ function processData(data_stations, data_climate) {
                     station_item.projection_linear[metric][month] = project_linear(current_year);
                     station_item.projection_linear10[metric][month] = project_linear(current_year + 10);
                     station_item.projection_linear30[metric][month] = project_linear(current_year + 30);
-                } else if (months.length < 13) {
+                } else if ( month != '13' ) {
                     // drop station
+                    console.log(`Dropping station ${station_item.aemet_id} - ${station_item.name} because not enough data for ${metric} in month ${month}`);
                     ordered_data.splice(i, 1);
                     i--;
-                    // break;
+                    break_for = true;
+                    break;
                 }
-            });
-        });
+            }
+        }
     }
 
     
     // save for each station
-    
+
     var dir = './data/stations';
     console.log("Saving data for each station separately...");
 
