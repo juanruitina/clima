@@ -104,8 +104,8 @@ function processData(data_stations, data_climate) {
     for (var i = 0; i < data_stations.length; i++) {
         var station = {
             aemet_id: data_stations[i].indicativo,
-            name: sentenceCase(data_stations[i].nombre),
-            region: sentenceCase(data_stations[i].provincia),
+            name: sentenceCase(data_stations[i].nombre).trim(),
+            region: sentenceCase(data_stations[i].provincia).trim(),
             lat: parseCoordinates(data_stations[i].latitud),
             lon: parseCoordinates(data_stations[i].longitud),
             // altitude: data_stations[i].altitud
@@ -296,14 +296,24 @@ var climate_request = 'https://opendata.aemet.es/opendata/api/valores/climatolog
 
 console.log("Requesting station data...");
 
+
+var myHeaders = new Headers();
+myHeaders.append('Content-Type', 'text/plain; charset=UTF-8');
+
 if ( arg == "dry" ) {
     var data_stations = JSON.parse(fs.readFileSync('./data/aemet-stations-raw.json'));
     var data_climate = JSON.parse(fs.readFileSync('./data/aemet-climate-raw.json'));
     processData(data_stations, data_climate);
 } else {   
-    fetch(stations_request)
-        .then(res => res.json())
-        .then(json => {
+    fetch(stations_request, myHeaders)
+        .then(function (response) {
+            return response.arrayBuffer();
+        })
+        .then(function (buffer) {
+            let decoder = new TextDecoder("iso-8859-15");
+            let text = decoder.decode(buffer);
+            let json = JSON.parse(text);
+
             if (json.estado != '200') {      
                 console.error(json.descripcion);
                 process.exit(1);
@@ -313,16 +323,27 @@ if ( arg == "dry" ) {
                 console.log("Downloading station data...");
 
                 if (arg == 'cache') {
-                    fetch(json.metadatos)
-                        .then(res => res.json())
-                        .then(json => {
-                                fs.writeFileSync('./data/aemet-stations-metadata-raw.json', JSON.stringify(json, null, 2));
-                            });
+                    fetch(json.metadatos, myHeaders)
+                        .then(function (response) {
+                            return response.arrayBuffer();
+                        })
+                        .then(function (buffer) {
+                            let decoder = new TextDecoder("iso-8859-15");
+                            let text = decoder.decode(buffer);
+                            let json = JSON.parse(text);
+                            fs.writeFileSync('./data/aemet-stations-metadata-raw.json', JSON.stringify(json, null, 2));
+                        });
                 }
 
-                fetch(json.datos)
-                    .then(res => res.json())
-                    .then(data_stations => {
+                fetch(json.datos, myHeaders)
+                    .then(function (response) {
+                        return response.arrayBuffer();
+                    })
+                    .then(function (buffer) {
+                        let decoder = new TextDecoder("iso-8859-15");
+                        let text = decoder.decode(buffer);
+                        let data_stations = JSON.parse(text);
+
                         // store data_json in file
                         var dir = './data';
                         if (!fs.existsSync(dir)) {
@@ -343,15 +364,26 @@ if ( arg == "dry" ) {
 
                                     if (arg == 'cache') {
                                         fetch(json.metadatos)
-                                            .then(res => res.json())
-                                            .then(json => {
-                                                    fs.writeFileSync('./data/aemet-climate-metadata-raw.json', JSON.stringify(json, null, 2));
-                                                });
+                                            .then(function (response) {
+                                                return response.arrayBuffer();
+                                            })
+                                            .then(function (buffer) {
+                                                let decoder = new TextDecoder("iso-8859-15");
+                                                let text = decoder.decode(buffer);
+                                                let data_stations = JSON.parse(text);
+                                                fs.writeFileSync('./data/aemet-climate-metadata-raw.json', JSON.stringify(json, null, 2));
+                                            });
                                     }
                                             
                                     fetch(json.datos)
-                                        .then(res => res.json())
-                                        .then(data_climate => {
+                                        .then(function (response) {
+                                            return response.arrayBuffer();
+                                        })
+                                        .then(function (buffer) {
+                                            let decoder = new TextDecoder("iso-8859-15");
+                                            let text = decoder.decode(buffer);
+                                            let data_climate = JSON.parse(text);
+
                                             if (arg == 'cache') {
                                                 fs.writeFileSync('./data/aemet-climate-raw.json', JSON.stringify(data_climate, null, 2), 'utf8');
                                             }

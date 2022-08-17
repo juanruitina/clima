@@ -38,6 +38,7 @@ const options = {
     maximumAge: 0
 };
 
+/* Sort selectors alphabetically */
 function sortSelectors() {
     var selectors = document.querySelectorAll('select');
 
@@ -52,7 +53,7 @@ function sortSelectors() {
                 cl.options[i].selected;
         }
 
-        clTexts.sort();
+        clTexts.sort((a, b) => a.localeCompare(b, 'es', { ignorePunctuation: true }));
 
         for (i = 1; i < cl.length; i++) {
             var parts = clTexts[i - 1].split(';');
