@@ -308,7 +308,11 @@ var climate_request = 'https://opendata.aemet.es/opendata/api/valores/climatolog
 
 console.log("Requesting station data...");
 
-let myHeaders = new Headers();
+// From node 18
+// let myHeaders = new Headers();
+// in the meantime:
+
+let myHeaders = new fetch.Headers();
 myHeaders.append('Content-Type', 'text/plain; charset=UTF-8');
 let decoder = new TextDecoder("iso-8859-15");
 
