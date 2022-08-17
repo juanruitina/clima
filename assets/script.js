@@ -69,12 +69,20 @@ function sortSelectors() {
     });
 }
 
-function loadTable(aemet_id) {
+function loadTable(aemet_id, is_close = false) {
     document.querySelector(".loading-alert").classList.remove("hidden")
 
     var path = "./data/stations/" + aemet_id + ".json"
     grabData(path).then(function (climate_data) {
-        document.querySelector(".station").innerHTML = `Estación: ${climate_data.name} · ${climate_data.region} · ID: ${climate_data.aemet_id}`;
+        document.querySelector(".station").innerHTML = `
+        <p class="station-label">Estación</p>
+        <h2 class="station-name">${climate_data.name}</h2>
+        <p class="station-meta">${climate_data.region} · ID: ${climate_data.aemet_id}</p>
+        `;
+
+        if ( is_close ) {
+            document.querySelector('.station-label').innerHTML = "La estación más cercana es";
+        }
 
         // create table
         var table = document.createElement("table");
@@ -91,7 +99,7 @@ function loadTable(aemet_id) {
         table_header.appendChild(table_header_cell);
 
         // add one column per month
-        for (var i = 0; i < months.length; i++) {
+        for (var i = 0; i < months.length - 1; i++) {
             var table_header_cell = document.createElement("th");
             table_header_cell.innerHTML = months[i];
             table_header.appendChild(table_header_cell);
@@ -107,7 +115,7 @@ function loadTable(aemet_id) {
             table_row.appendChild(table_row_cell);
 
             // add one column per month
-            for (var i = 0; i < months.length; i++) {
+            for (var i = 0; i < months.length - 1; i++) {
                 var table_row_cell = document.createElement("td");
 
                 var value = climate_data.projection_linear[metric][i + 1];
@@ -257,7 +265,7 @@ function loadCloserStation(latitude, longitude) {
     }
 
     if (station.aemet_id) {
-        loadTable(station.aemet_id);
+        loadTable(station.aemet_id, 'true');
     }
 }
 
@@ -369,7 +377,7 @@ grabData("./data/aemet-stations.json").then(function (data) {
         // Check if search field is empty
         if (searchField == "") {
             // Show error message
-            document.querySelector(".error-message").innerHTML = "Introduce un lugar";
+            // document.querySelector(".error-message").innerHTML = "Introduce un lugar";
         } else {
             document.querySelector(".error-message").innerHTML = "";
 
@@ -378,7 +386,7 @@ grabData("./data/aemet-stations.json").then(function (data) {
             // Show loading message
             document.querySelector(".loading-message").style.display = "block";
 
-            let url = "https://nominatim.openstreetmap.org/search?q=" + searchField + "&format=json&countrycodes=es&polygon=1&addressdetails=1&accept-language=es";
+            let url = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(searchField) + "&format=json&countrycodes=es&polygon=1&addressdetails=1&accept-language=es";
             console.log(url);
 
             // Send request to nominatim
@@ -428,7 +436,7 @@ grabData("./data/aemet-stations.json").then(function (data) {
         // add button to get user location
         var button = document.createElement("button");
         button.classList.add("get-location");
-        button.innerHTML = "Obtener mi ubicación";
+        button.innerHTML = "Obtener ubicación";
 
         button.addEventListener("click", function () {
             navigator.geolocation.getCurrentPosition(success, error, options);
@@ -440,7 +448,7 @@ grabData("./data/aemet-stations.json").then(function (data) {
     // Add button to get random station
     var button = document.createElement("button");
     button.classList.add("get-random");
-    button.innerHTML = "Obtener estación aleatoria";
+    button.innerHTML = "Aleatoria";
     document.querySelector(".station-select-container").appendChild(button);
     
     button.addEventListener("click", function () {

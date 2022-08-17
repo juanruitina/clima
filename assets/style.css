@@ -3,14 +3,40 @@ html, body {
     height: 100%;
 }
 
+a {
+    color: inherit;
+}
+
+a:hover {
+    text-decoration-thickness: 2px;
+}
+
 body {
     font-family: system-ui, sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
     gap: 1rem;
-    flex-wrap: wrap;
+}
+
+.container {
+    max-width: 980px;
+    padding-left: 32px;
+    padding-right: 32px;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+header {
+    margin-top: 2rem;
+}
+
+h1 {
+    margin-bottom: 0;
+}
+
+.subtitle {
+    font-weight: bold;
 }
 
 table {
@@ -30,6 +56,10 @@ th:first-child {
     text-align: left;
 }
 
+th {
+    font-weight: normal;
+}
+
 .sr-only {
     position: absolute;
     width: 1px;
@@ -47,17 +77,13 @@ span.difference {
     margin-top: .5em;
 }
 
-.station-select-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 1rem;
+:is(select, button, input) {
+    padding: .25em .5em;
 }
 
-.station-select-container :is(select, button) {
-    padding: .25em .5em;
-} 
+select {
+    max-width: 200px;
+}
 
 .spinner {
     display: inline-block;
@@ -83,4 +109,55 @@ span.difference {
 
 .hidden {
     display: none;
+}
+
+label {
+    text-transform: uppercase;
+    font-size: .9em;
+    display: block;
+    margin-bottom: .5rem;
+}
+
+.station {
+    margin-top: 2rem;
+}
+
+.station-label {
+    text-transform: uppercase;
+    font-size: .9em;
+    font-weight: bold;
+}
+
+.station-name {
+    font-size: 2rem;
+    margin-top: .8rem;
+    margin-bottom: .8rem;
+}
+
+.station-label, .station-meta {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+footer {
+    margin-top: 2rem;
+    margin-bottom: 4rem;
+}
+
+.credits {
+    color: gray;
+}
+
+.select-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+p {
+    max-width: 640px;
+}
+
+details div {
+    margin-bottom: 2rem;
 }
