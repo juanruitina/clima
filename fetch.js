@@ -260,12 +260,10 @@ function processData(data_stations, data_climate) {
         });
     }
 
-    var dir = './data/stations';
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
-    }
-
+    
     // save for each station
+    
+    var dir = './data/stations';
     console.log("Saving data for each station separately...");
 
     for (var i = 0; i < ordered_data.length; i++) {
@@ -290,15 +288,20 @@ function processData(data_stations, data_climate) {
     console.log("Complete!");
 }
 
+var stations_dir = './data/stations';
+if (!fs.existsSync(stations_dir)) {
+    fs.mkdirSync(stations_dir, { recursive: true });
+}
+
 var stations_request = 'https://opendata.aemet.es/opendata/api/valores/climatologicos/inventarioestaciones/todasestaciones/?api_key=' + aemetApiKey;
 
 var climate_request = 'https://opendata.aemet.es/opendata/api/valores/climatologicos/mensualesanuales/datos/anioini/' + start_year + '-01-01T00%3A00%3A00UTC/aniofin/' + last_year + '-01-01T00%3A00%3A00UTC/estacion/0000/?api_key=' + aemetApiKey;
 
 console.log("Requesting station data...");
 
-
-var myHeaders = new Headers();
+let myHeaders = new Headers();
 myHeaders.append('Content-Type', 'text/plain; charset=UTF-8');
+let decoder = new TextDecoder("iso-8859-15");
 
 if ( arg == "dry" ) {
     var data_stations = JSON.parse(fs.readFileSync('./data/aemet-stations-raw.json'));
@@ -310,7 +313,6 @@ if ( arg == "dry" ) {
             return response.arrayBuffer();
         })
         .then(function (buffer) {
-            let decoder = new TextDecoder("iso-8859-15");
             let text = decoder.decode(buffer);
             let json = JSON.parse(text);
 
@@ -328,7 +330,6 @@ if ( arg == "dry" ) {
                             return response.arrayBuffer();
                         })
                         .then(function (buffer) {
-                            let decoder = new TextDecoder("iso-8859-15");
                             let text = decoder.decode(buffer);
                             let json = JSON.parse(text);
                             fs.writeFileSync('./data/aemet-stations-metadata-raw.json', JSON.stringify(json, null, 2));
@@ -340,15 +341,11 @@ if ( arg == "dry" ) {
                         return response.arrayBuffer();
                     })
                     .then(function (buffer) {
-                        let decoder = new TextDecoder("iso-8859-15");
                         let text = decoder.decode(buffer);
                         let data_stations = JSON.parse(text);
 
                         // store data_json in file
                         var dir = './data';
-                        if (!fs.existsSync(dir)) {
-                            fs.mkdirSync(dir);
-                        }
 
                         if (arg == 'cache') {
                             fs.writeFileSync('./data/aemet-stations-raw.json', JSON.stringify(data_stations, null, 2), 'utf8');
@@ -368,10 +365,9 @@ if ( arg == "dry" ) {
                                                 return response.arrayBuffer();
                                             })
                                             .then(function (buffer) {
-                                                let decoder = new TextDecoder("iso-8859-15");
                                                 let text = decoder.decode(buffer);
                                                 let data_stations = JSON.parse(text);
-                                                fs.writeFileSync('./data/aemet-climate-metadata-raw.json', JSON.stringify(json, null, 2));
+                                                fs.writeFileSync('./data/aemet-climate-metadata-raw.json', JSON.stringify(data_stations, null, 2));
                                             });
                                     }
                                             
@@ -380,7 +376,6 @@ if ( arg == "dry" ) {
                                             return response.arrayBuffer();
                                         })
                                         .then(function (buffer) {
-                                            let decoder = new TextDecoder("iso-8859-15");
                                             let text = decoder.decode(buffer);
                                             let data_climate = JSON.parse(text);
 
