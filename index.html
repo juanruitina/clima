@@ -10,7 +10,29 @@
 </head>
 
 <body>
-    <div class="station-select-container"></div>
+    <div class="location-select-container">
+        <div>
+            <form id="search-location-form">
+                <label class="search-label" for="search-location">Busca un lugar en España</label>
+                <input id="search-location" type="text" placeholder="">
+                <input id="search-button" class="button" type="button" value="Search">
+            </form>
+
+            <!-- Add results container -->
+            <div class="results-container"></div>
+
+            <!-- Add error message -->
+            <div class="error-message"></div>
+
+            <!-- Add loading message -->
+            <div class="loading-message" style="display: none">Cargando...</div>
+        </div>
+    </div>
+
+    <p>Selecciona una estación meteorológica</p>
+    <div class="station-select-container">
+    </div>
+
     <div class="station"></div>
 
     <div class="loading-alert">

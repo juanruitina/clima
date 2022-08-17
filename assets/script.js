@@ -244,19 +244,12 @@ function loadTable(aemet_id) {
     document.querySelector(".loading-alert").classList.add("hidden")
 }
 
-function success(pos) {
-    const user_coordinates = pos.coords;
-
-    console.log('Your current position is:');
-    console.log(`Latitude : ${user_coordinates.latitude}`);
-    console.log(`Longitude: ${user_coordinates.longitude}`);
-    console.log(`More or less ${user_coordinates.accuracy} meters.`);
-
+function loadCloserStation(latitude, longitude) {
     var station;
 
     for (var i = 0; i < station_data.length; i++) {
         var station_current = station_data[i];
-        station_current.distance = distance(user_coordinates.latitude, user_coordinates.longitude, station_current.lat, station_current.lon, "K");
+        station_current.distance = distance(latitude, longitude, station_current.lat, station_current.lon, "K");
 
         if (!station || !station.distance || station_current.distance < station.distance) {
             station = station_current;
@@ -266,6 +259,17 @@ function success(pos) {
     if (station.aemet_id) {
         loadTable(station.aemet_id);
     }
+}
+
+function success(pos) {
+    const user_coordinates = pos.coords;
+
+    console.log('Your current position is:');
+    console.log(`Latitude : ${user_coordinates.latitude}`);
+    console.log(`Longitude: ${user_coordinates.longitude}`);
+    console.log(`More or less ${user_coordinates.accuracy} meters.`);
+
+    loadCloserStation(user_coordinates.latitude, user_coordinates.longitude);
 }
 
 function error(err) {
@@ -357,6 +361,69 @@ grabData("./data/aemet-stations.json").then(function (data) {
         loadTable(station_id);
     });
 
+    // Search locations
+
+    function loadSearchResults() {
+        var searchField = document.getElementById("search-location").value;
+
+        // Check if search field is empty
+        if (searchField == "") {
+            // Show error message
+            document.querySelector(".error-message").innerHTML = "Introduce un lugar";
+        } else {
+            document.querySelector(".error-message").innerHTML = "";
+
+            console.log(searchField);
+
+            // Show loading message
+            document.querySelector(".loading-message").style.display = "block";
+
+            let url = "https://nominatim.openstreetmap.org/search?q=" + searchField + "&format=json&countrycodes=es&polygon=1&addressdetails=1&accept-language=es";
+            console.log(url);
+
+            // Send request to nominatim
+            fetch(url)
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    // Hide loading message
+                    document.querySelector(".loading-message").style.display = "none";
+                    // Show results container
+                    document.querySelector(".results-container").style.display = "block";
+                    // Add results to results container
+
+                    let place_type = data[0].type;
+                    let place_name = data[0].address[place_type];
+
+                    // if place_name is undefined
+                    if (place_name === undefined) {
+                        // replace ", Spain" from place_name
+                        place_name = data[0].display_name.replace(", España", "");
+                        document.querySelector(".results-container").innerHTML = `<p><strong>${place_name}</strong></p>`;
+                    } else {
+                        document.querySelector(".results-container").innerHTML = `<p><strong>${place_name}</strong>, ${data[0].address.state}</p>`;
+                    }
+
+                    loadCloserStation(data[0].lat, data[0].lon);
+                }).catch(function (error) {
+                    console.log(error);
+                }).finally(function () {
+                });
+        }
+    }
+
+    // Add event listener to search button
+    document.getElementById('search-location-form').addEventListener("submit", function (e) {
+        e.preventDefault(); 
+        loadSearchResults();
+    }, false);
+
+    document.getElementById("search-button").addEventListener("click", function () {
+        loadSearchResults();
+    });
+
+    // Add geolocation if available
     if ("geolocation" in navigator) {
         // add button to get user location
         var button = document.createElement("button");
@@ -367,10 +434,10 @@ grabData("./data/aemet-stations.json").then(function (data) {
             navigator.geolocation.getCurrentPosition(success, error, options);
         });
 
-        document.querySelector(".station-select-container").appendChild(button);
+        document.querySelector(".location-select-container").appendChild(button);
     }
 
-    // add button to get random station
+    // Add button to get random station
     var button = document.createElement("button");
     button.classList.add("get-random");
     button.innerHTML = "Obtener estación aleatoria";
