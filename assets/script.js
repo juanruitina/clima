@@ -69,19 +69,60 @@ function sortSelectors() {
     });
 }
 
-function loadTable(aemet_id, is_close = false) {
-    document.querySelector(".loading-alert").classList.remove("hidden")
+function loadTable(aemet_id, is_close = false, distance = false, place_name = false) {
+    document.querySelector(".loading-alert").classList.remove("hidden");
 
     var path = "./data/stations/" + aemet_id + ".json"
     grabData(path).then(function (climate_data) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('estacion', climate_data.aemet_id);
+        history.replaceState(null, null, "?" + urlParams.toString());
+
+        let station_url = location.protocol + '//' + location.host + "/?estacion=" + climate_data.aemet_id;
+        let share_message = "Descubre el clima real en " + climate_data.name + ": " + station_url;
+
         document.querySelector(".station").innerHTML = `
-        <p class="station-label">Estación</p>
-        <h2 class="station-name">${climate_data.name}</h2>
-        <p class="station-meta">${climate_data.region} · ID: ${climate_data.aemet_id}</p>
+            <div class="station-label">Estación meteorológica</div>
+            <h2 class="station-name">${climate_data.name}</h2>
+            <p class="station-meta"><strong>${climate_data.region}</strong> · ID: ${climate_data.aemet_id}</p>
+
+            <ul class="station-options no-list">
+                <li>
+                    <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${ station_url }')">📋 Copiar enlace</button>
+                </li>
+                <li>
+                    <a class="share-button" href="https://twitter.com/intent/tweet?source=https%3A%2F%2Fclima-pro.vercel.app&amp;text=${ encodeURIComponent(share_message) }" target="_blank" rel="noopener noreferrer" title="Share on Twitter"><svg class="icon" aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"></path></svg><span class="btn-link-label">Tuitear</span></a>
+                </li>
+                <li>
+                    <a href="data/stations/${climate_data.aemet_id}.json" download="Clima.pro - Estación ${climate_data.aemet_id}, ${climate_data.name}.json">Descargar datos (JSON)</a>
+                </li>
+            </ul>
         `;
 
+        // Show distance
+        if ( distance ) {
+            var distance_element = document.querySelector(".station-meta");
+            distance_element.innerHTML += ` · Distancia: ${ Math.round(distance) } km`;
+
+            if ( distance <= 10 ) {
+                distance_element.innerHTML += ` <a title="Dado que la estación es cercana, es probable que los datos sean representativos de la ubicación que has introducido">✅</a>`;
+            } else if (distance > 20) {
+                distance_element.innerHTML += ` <a title="Esta estación está bastante lejos. Los datos pueden no ser representativos para la ubicación que has introducido, particularmente si hay una diferencia notable en altitud o en distancia al mar.">⚠️</a>`;
+            }
+        }
+
         if ( is_close ) {
-            document.querySelector('.station-label').innerHTML = "La estación más cercana es";
+            if ( place_name ) {
+                let place_name_short = place_name.replace(/^(.{40}[^\s]*).*/, "$1");
+
+                if ( place_name_short != place_name ) {
+                    place_name_short = `<a title="${place_name}">${place_name_short}…</a>`;
+                }
+
+                document.querySelector('.station-label').innerHTML = `La estación meteorológica más cercana a <span class="location-name">${ place_name_short }</span> es`;
+            } else {
+                document.querySelector('.station-label').innerHTML = "La estación meteorológica más cercana es";
+            }
         }
 
         // create table
@@ -252,7 +293,7 @@ function loadTable(aemet_id, is_close = false) {
     document.querySelector(".loading-alert").classList.add("hidden")
 }
 
-function loadCloserStation(latitude, longitude) {
+function loadCloserStation(latitude, longitude, place_name = false) {
     var station;
 
     for (var i = 0; i < station_data.length; i++) {
@@ -265,7 +306,7 @@ function loadCloserStation(latitude, longitude) {
     }
 
     if (station.aemet_id) {
-        loadTable(station.aemet_id, 'true');
+        loadTable(station.aemet_id, 'true', station.distance, place_name);
     }
 }
 
@@ -293,7 +334,14 @@ grabData("./data/aemet-stations.json").then(function (data) {
         loadTable(random_station.aemet_id);
     }
 
-    randomStation();
+    const urlParams = new URLSearchParams(window.location.search);
+    var station_parameter = urlParams.get('estacion')
+
+    if (station_parameter) {
+        loadTable(station_parameter);
+    } else {
+        randomStation();
+    }
 
     // ADD SELECTORS
     var select;
@@ -323,7 +371,7 @@ grabData("./data/aemet-stations.json").then(function (data) {
         }
     }
     
-    document.querySelector(".station-select-container").appendChild(select);
+    document.querySelector(".station-select-container div").appendChild(select);
 
     // create select field and populate with stations
     select = document.createElement("select");
@@ -338,7 +386,7 @@ grabData("./data/aemet-stations.json").then(function (data) {
         option.setAttribute("value", station_data[i].aemet_id);
         select.appendChild(option);
     }
-    document.querySelector(".station-select-container").appendChild(select);
+    document.querySelector(".station-select-container div").appendChild(select);
 
     // filter stations based on region
     document.querySelector(".select-region").addEventListener("change", function () {
@@ -379,12 +427,13 @@ grabData("./data/aemet-stations.json").then(function (data) {
             // Show error message
             // document.querySelector(".error-message").innerHTML = "Introduce un lugar";
         } else {
-            document.querySelector(".error-message").innerHTML = "";
+            document.querySelector(".location-error").style.display = "block";
+            document.querySelector(".location-error").innerHTML = "";
 
             console.log(searchField);
 
             // Show loading message
-            document.querySelector(".loading-message").style.display = "block";
+            document.querySelector(".location-loading").style.display = "block";
 
             let url = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(searchField) + "&format=json&countrycodes=es&polygon=1&addressdetails=1&accept-language=es";
             console.log(url);
@@ -396,9 +445,9 @@ grabData("./data/aemet-stations.json").then(function (data) {
                 })
                 .then(function (data) {
                     // Hide loading message
-                    document.querySelector(".loading-message").style.display = "none";
+                    document.querySelector(".location-loading").style.display = "none";
                     // Show results container
-                    document.querySelector(".results-container").style.display = "block";
+                    document.querySelector(".location-results").style.display = "block";
                     // Add results to results container
 
                     let place_type = data[0].type;
@@ -408,12 +457,18 @@ grabData("./data/aemet-stations.json").then(function (data) {
                     if (place_name === undefined) {
                         // replace ", Spain" from place_name
                         place_name = data[0].display_name.replace(", España", "");
-                        document.querySelector(".results-container").innerHTML = `<p><strong>${place_name}</strong></p>`;
+                        // document.querySelector(".location-results").innerHTML = `${place_name}`;
                     } else {
-                        document.querySelector(".results-container").innerHTML = `<p><strong>${place_name}</strong>, ${data[0].address.state}</p>`;
+                        place_name = `${ place_name }, ${ data[0].address.state }`;
+                        // document.querySelector(".location-results").innerHTML = `${place_name}, ${data[0].address.state}`;
                     }
 
-                    loadCloserStation(data[0].lat, data[0].lon);
+                    // let place_name = data[0].display_name.replace(", España", "");
+                    
+                    // document.querySelector(".location-results").innerHTML = `${place_name}`;
+
+
+                    loadCloserStation(data[0].lat, data[0].lon, place_name);
                 }).catch(function (error) {
                     console.log(error);
                 }).finally(function () {
@@ -448,8 +503,8 @@ grabData("./data/aemet-stations.json").then(function (data) {
     // Add button to get random station
     var button = document.createElement("button");
     button.classList.add("get-random");
-    button.innerHTML = "Aleatoria";
-    document.querySelector(".station-select-container").appendChild(button);
+    button.innerHTML = "🔀 Aleatorio";
+    document.querySelector(".select-container").appendChild(button);
     
     button.addEventListener("click", function () {
         randomStation();
