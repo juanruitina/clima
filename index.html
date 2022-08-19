@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Clima.pro</title>
+    <title>Clima real</title>
+    <meta name="description" content="Descubre una estimación del clima actual en España teniendo en cuenta el impacto del cambio climático.">
     <link rel="stylesheet" href="/assets/style.css" />
     <script src="./assets/script.js"></script>
 </head>
@@ -12,8 +13,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>Clima.pro</h1>
-            <p class="subtitle">Descubre el clima real de una España recalentada</p>
+            <h1>☀️ <strong>Clima real</strong> en una España recalentada</p>
         </header>
 
         <div class="select-container">
@@ -31,35 +31,44 @@
             </form>
         </div>
 
-        <div>
-            <div class="location-error"></div>
-            <div class="location-loading">Buscando...</div>
-            <div class="location-results"></div>
+        <div class="loading-alert">
+            <div class='spinner'></div>Cargando
+        </div>
 
+        <div class="error-message"></div>
+
+        <div class="result">
             <div class="station"></div>
 
-            <div class="loading-alert">
-                <h2><div class='spinner'></div>Cargando datos</h2>
-            </div>
+            <div class="climate-table-container"></div>
         </div>
         
-        <div class="climate-table-container"></div>
 
         <section id="about">
-            <h2 class="sr-only">Qué es Clima.pro</h2>
+            <h2 class="sr-only">Qué es esta herramienta</h2>
 
-            <p class="description">Clima.pro ofrece una estimación del clima actual en España teniendo en cuenta el impacto del cambio climático.</p>
+            <p class="description">Descubre una estimación del clima actual en España teniendo en cuenta el impacto del cambio climático.</p>
 
-            <p>El clima de un lugar se representa habitualmente con las medias de los últimos 30 años, y se visualiza en un gráfico llamado <a href="https://es.wikipedia.org/wiki/Climograma">climograma</a>. Sin embargo, las medias parecen no reflejar la tendencia al alza de las temperaturas debida al cambio climático. Clima.pro hace estimaciones del clima actual en España mediante <strong>regresión lineal</strong>, calculada a partir de los datos de los últimos 30 años.</p>
+            <p>El clima de un lugar se representa habitualmente con las medias de los últimos 30 años, como por ejemplo en <a href="https://es.wikipedia.org/wiki/Oviedo#Clima">esta sección en Wikipedia</a>. Sin embargo, las medias parecen no reflejar la tendencia al alza de las temperaturas debida al cambio climático. Esta web muestra estimaciones del clima actual en España mediante <strong>regresión lineal</strong>, calculada a partir de los datos de los últimos 30 años.</p>
 
-            <p>Clima.pro utiliza datos recogidos por las estaciones de la <a href="https://www.aemet.es">Agencia Estatal de Meteorología</a> e intenta mostrarte la más cercana a la ubicación que indiques. ¡Pero no siempre hay una cerca! Así que en algunos casos los datos pueden no ser muy representativos, particularmente si hay una diferencia notable en altitud o en distancia al mar.</p>
+            <h2>Limitaciones</h2>
+
+            <p>La herramienta utiliza datos recogidos por las estaciones de la <a href="https://www.aemet.es">Agencia Estatal de Meteorología</a> e intenta mostrarte la más cercana a la ubicación que indiques. ¡Pero no siempre hay una cerca! Así que en algunos casos los datos pueden no ser muy representativos, particularmente si hay una diferencia notable en altitud o en distancia al mar.</p>
             
             <p>Ten en cuenta que el calientamiento global no es un proceso lineal, por lo que las proyecciones a futuro pueden no ser precisas. Organizaciones como la <a href="https://www.aemet.es/es/serviciosclimaticos/cambio_climat">AEMET</a> o la <a href="https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6">NASA</a> utilizan modelos muchos más complejos para predecir el cambio climático.</p>
+
+            <h2>Privacidad</h2>
+
+            <p>Esta web no almacena datos personales.</p>
+
+            <p>Si utilizas la <strong>geolocalización</strong>, tus coordenadas nunca abandonarán tu dispositivo. Tu navegador las utilizará para encontrar la estación más cercana sin consultar con el servidor, y una vez la encuentre descargará únicamente los datos de dicha estación.</p>
+
+            <p>Si utilizas la <strong>búsqueda</strong>, la web hará una petición a <a href="https://www.openstreetmap.org/">OpenStreetMap</a> para obtener información de los lugares que más se ajusten a tu petición. OpenStreetMap recibirá los datos habituales que recibe cualquier web que visitas, como tu dirección IP, y puede usarlos para mejorar el servicio. Puedes leer más en su <a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy#Data_we_receive_automatically">política de privacidad</a>.</p>
         </section>
 
         <footer>
             <div class="credits">
-                <p>Una idea de <a href="https://ruitina.com">Juan Ruitiña</a></p>
+                <p>Una idea de <a href="https://ruitina.com">Juan Ruitiña</a> · <a href="https://github.com/juanruitina/clima">Código en Github</a></p>
                 <p class="credits">Calculado a partir de datos de la <a href="https://www.aemet.es">AEMET</a></p>
             </div>
         </footer>

@@ -69,8 +69,23 @@ function sortSelectors() {
     });
 }
 
+function errorMessage(message = "", online = false) {
+    if (online && !navigator.onLine) {
+        message = "Parece que no hay acceso a internet. Por favor, verifica tu conexión.";
+    }
+
+    if (message != "") {
+        document.querySelector(".error-message").innerHTML = message;
+        document.querySelector(".loading-alert").style.display = "none";
+        document.querySelector(".error-message").style.display = "block";
+    } else {
+        document.querySelector(".error-message").style.display = "none";
+    }  
+}
+
 function loadTable(aemet_id, is_close = false, distance = false, place_name = false) {
     document.querySelector(".loading-alert").classList.remove("hidden");
+    errorMessage();
 
     var path = "./data/stations/" + aemet_id + ".json"
     grabData(path).then(function (climate_data) {
@@ -93,10 +108,10 @@ function loadTable(aemet_id, is_close = false, distance = false, place_name = fa
                         <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${ station_url }')">📋 Copiar enlace</button>
                     </li>
                     <li>
-                        <a class="share-button" href="https://twitter.com/intent/tweet?source=https%3A%2F%2Fclima-pro.vercel.app&amp;text=${ encodeURIComponent(share_message) }" target="_blank" rel="noopener noreferrer" title="Share on Twitter"><svg class="icon" aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"></path></svg><span class="btn-link-label">Tuitear</span></a>
+                        <a class="share-button" href="https://twitter.com/intent/tweet?source=https%3A%2F%2Fclima-pro.vercel.app&amp;text=${ encodeURIComponent(share_message) }" target="_blank" rel="noopener noreferrer">🐦 Tuitear</a>
                     </li>
                     <li>
-                        <a href="data/stations/${climate_data.aemet_id}.json" download="Clima.pro - Estación ${climate_data.aemet_id}, ${climate_data.name}.json">JSON</a>
+                        <a href="data/stations/${climate_data.aemet_id}.json" download="Estación ${climate_data.aemet_id} ${climate_data.name}.json">JSON</a>
                     </li>
                 </ul>
             </div>
@@ -116,13 +131,7 @@ function loadTable(aemet_id, is_close = false, distance = false, place_name = fa
 
         if ( is_close ) {
             if ( place_name ) {
-                let place_name_short = place_name.replace(/^(.{40}[^\s]*).*/, "$1");
-
-                if ( place_name_short != place_name ) {
-                    place_name_short = `<a title="${place_name}">${place_name_short}…</a>`;
-                }
-
-                document.querySelector('.station-label').innerHTML = `La estación meteorológica más cercana a <span class="location-name">${ place_name_short }</span> es`;
+                document.querySelector('.station-label').innerHTML = `La estación meteorológica más cercana a <span class="location-name">${ place_name }</span> es`;
             } else {
                 document.querySelector('.station-label').innerHTML = "La estación meteorológica más cercana es";
             }
@@ -270,7 +279,7 @@ function loadTable(aemet_id, is_close = false, distance = false, place_name = fa
                 background = background + hex(item);
             }
 
-            if (value < -23.3 || value >= 37.8) {
+            if (value < -23.3 || value >= 32) {
                 text_color = "FFFFFF";
             } else {
                 text_color = "000000";
@@ -325,6 +334,7 @@ function success(pos) {
 }
 
 function error(err) {
+    errorMessage("No se pudo obtener tu ubicación");
     console.warn(`ERROR(${err.code}): ${err.message}`);
 }
 
@@ -427,16 +437,13 @@ grabData("./data/aemet-stations.json").then(function (data) {
 
         // Check if search field is empty
         if (searchField == "") {
-            // Show error message
-            // document.querySelector(".error-message").innerHTML = "Introduce un lugar";
+            errorMessage("Introduce un lugar");
         } else {
-            document.querySelector(".location-error").style.display = "block";
-            document.querySelector(".location-error").innerHTML = "";
-
+            errorMessage();
             console.log(searchField);
 
             // Show loading message
-            document.querySelector(".location-loading").style.display = "block";
+            document.querySelector(".loading-alert").style.display = "block";
 
             let url = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(searchField) + "&format=json&countrycodes=es&polygon=1&addressdetails=1&accept-language=es";
             console.log(url);
@@ -447,32 +454,55 @@ grabData("./data/aemet-stations.json").then(function (data) {
                     return response.json();
                 })
                 .then(function (data) {
-                    // Hide loading message
-                    document.querySelector(".location-loading").style.display = "none";
-                    // Show results container
-                    document.querySelector(".location-results").style.display = "block";
-                    // Add results to results container
+                    console.log(data);
 
-                    let place_type = data[0].type;
-                    let place_name = data[0].address[place_type];
-
-                    // if place_name is undefined
-                    if (place_name === undefined) {
-                        // replace ", Spain" from place_name
-                        place_name = data[0].display_name.replace(", España", "");
-                        // document.querySelector(".location-results").innerHTML = `${place_name}`;
+                    // Check if there are results
+                    if (data.length < 1) {
+                        errorMessage("No se encontraron resultados. Prueba a cambiar tu búsqueda.");
                     } else {
-                        place_name = `${ place_name }, ${ data[0].address.state }`;
-                        // document.querySelector(".location-results").innerHTML = `${place_name}, ${data[0].address.state}`;
+                        var place;
+
+                        // find first result whose type is 'boundary' (likely a ), else take first result
+                        for (var i = 0; i < data.length; i++) {
+                            if (data[i].class === "boundary") {
+                                place = data[i];
+                                break;
+                            }
+                        }
+
+                        if (!place) {
+                            place = data[0];
+                        }
+
+                        document.querySelector(".loading-alert").style.display = "none";
+                        
+                        // Add results to results container
+
+                        let place_type = place.type;
+                        let place_name = place.address[place_type];
+
+                        if (place_name === undefined) {
+                            place_name = place.display_name.replace(", " + place.address.country, "");
+
+                            var parameters = ["city_district", "suburb", "county", "postcode"];
+
+                            for (const parameter of parameters) {
+                                let value = place.address[parameter];
+
+                                if (value) {
+                                    place_name = place_name.replace(", " + value, "");
+                                }
+                            }
+                        } else {
+                            place_name = `${ place_name }, ${ place.address.state }`;
+                        }
+
+                        place_name = `<a title="${ place.display_name }">${ place_name }</a>`;
+
+                        loadCloserStation(place.lat, place.lon, place_name);
                     }
-
-                    // let place_name = data[0].display_name.replace(", España", "");
-                    
-                    // document.querySelector(".location-results").innerHTML = `${place_name}`;
-
-
-                    loadCloserStation(data[0].lat, data[0].lon, place_name);
                 }).catch(function (error) {
+                    errorMessage("Hay algún problema con el buscador. Por favor, prueba de nuevo más tarde.", true);
                     console.log(error);
                 }).finally(function () {
                 });
