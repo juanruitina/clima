@@ -174,11 +174,6 @@ details div {
     margin-bottom: 2rem;
 }
 
-.location-results,
-.error-message {
-    display: none;
-}
-
 .error-message,
 .loading-alert {
     margin-bottom: -1rem;

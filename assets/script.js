@@ -76,17 +76,18 @@ function errorMessage(message = "", online = false) {
 
     if (message != "") {
         document.querySelector(".error-message").innerHTML = message;
-        document.querySelector(".loading-alert").style.display = "none";
-        document.querySelector(".error-message").style.display = "block";
+        document.querySelector(".loading-alert").classList.add("hidden");
+        document.querySelector(".error-message").classList.remove("hidden");
     } else {
-        document.querySelector(".error-message").style.display = "none";
+        document.querySelector(".error-message").classList.add("hidden");
     }  
 }
 
 function loadTable(aemet_id, is_close = false, distance = false, place_name = false) {
-    document.querySelector(".loading-alert").classList.remove("hidden");
     errorMessage();
 
+    document.querySelector(".loading-alert").classList.remove("hidden");
+    
     var path = "./data/stations/" + aemet_id + ".json"
     grabData(path).then(function (climate_data) {
         const urlParams = new URLSearchParams(window.location.search);
@@ -317,7 +318,9 @@ function loadCloserStation(latitude, longitude, place_name = false) {
         }
     }
 
-    if (station.aemet_id) {
+    if (station.distance > 200) {
+        errorMessage("No hay ninguna estación cercana a esta ubicación.");
+    } else if (station.aemet_id) {
         loadTable(station.aemet_id, 'true', station.distance, place_name);
     }
 }
@@ -325,10 +328,10 @@ function loadCloserStation(latitude, longitude, place_name = false) {
 function success(pos) {
     const user_coordinates = pos.coords;
 
-    console.log('Your current position is:');
+    /* console.log('Your current position is:');
     console.log(`Latitude : ${user_coordinates.latitude}`);
     console.log(`Longitude: ${user_coordinates.longitude}`);
-    console.log(`More or less ${user_coordinates.accuracy} meters.`);
+    console.log(`More or less ${user_coordinates.accuracy} meters.`); */
 
     loadCloserStation(user_coordinates.latitude, user_coordinates.longitude);
 }
@@ -440,13 +443,11 @@ grabData("./data/aemet-stations.json").then(function (data) {
             errorMessage("Introduce un lugar");
         } else {
             errorMessage();
-            console.log(searchField);
 
             // Show loading message
-            document.querySelector(".loading-alert").style.display = "block";
+            document.querySelector(".loading-alert").classList.remove("hidden");
 
             let url = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(searchField) + "&format=json&countrycodes=es&polygon=1&addressdetails=1&accept-language=es";
-            console.log(url);
 
             // Send request to nominatim
             fetch(url)
@@ -454,8 +455,6 @@ grabData("./data/aemet-stations.json").then(function (data) {
                     return response.json();
                 })
                 .then(function (data) {
-                    console.log(data);
-
                     // Check if there are results
                     if (data.length < 1) {
                         errorMessage("No se encontraron resultados. Prueba a cambiar tu búsqueda.");
@@ -474,7 +473,7 @@ grabData("./data/aemet-stations.json").then(function (data) {
                             place = data[0];
                         }
 
-                        document.querySelector(".loading-alert").style.display = "none";
+                        document.querySelector(".loading-alert").classList.add("hidden");
                         
                         // Add results to results container
 
@@ -494,7 +493,11 @@ grabData("./data/aemet-stations.json").then(function (data) {
                                 }
                             }
                         } else {
-                            place_name = `${ place_name }, ${ place.address.state }`;
+                            place_name = `${ place_name }`
+                            
+                            if (place.address.state) {
+                                place_name += `, ${ place.address.state }`;
+                            } 
                         }
 
                         place_name = `<a title="${ place.display_name }">${ place_name }</a>`;
