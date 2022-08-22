@@ -35,7 +35,7 @@ h1 {
     margin-bottom: 0;
     font-weight: normal;
     text-transform: uppercase;
-    font-size: .9rem;
+    font-size: 1rem;
 }
 
 .subtitle {
@@ -53,6 +53,7 @@ th, td {
     text-align: center;
     border: 2px solid white;
     padding: .4rem .4rem;
+    min-width: 4.5ch;
 }
 
 th:first-child {
@@ -87,7 +88,7 @@ span.difference {
 }
 
 select {
-    max-width: 200px;
+    max-width: 180px;
 }
 
 .spinner {
@@ -259,4 +260,20 @@ svg.icon {
 
 * + h2 {
     margin-top: 2rem;
+}
+
+.station-select-container > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
+}
+
+#about h2 {
+    font-size: 1rem;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+}
+
+#about * + h2 {
+    margin-top: 2.4rem;
 }

@@ -366,7 +366,7 @@ grabData("./data/aemet-stations.json").then(function (data) {
     select = document.createElement("select");
     select.classList.add("select-region");
     var option = document.createElement("option");
-    option.innerHTML = "Selecciona una provincia";
+    option.innerHTML = "Provincia";
     option.setAttribute("value", "");
     select.appendChild(option);
     for (var i = 0; i < station_data.length; i++) {
@@ -393,7 +393,7 @@ grabData("./data/aemet-stations.json").then(function (data) {
     select = document.createElement("select");
     select.classList.add("station-select");
     var option = document.createElement("option");
-    option.innerHTML = "Selecciona una estación";
+    option.innerHTML = "Estación";
     option.setAttribute("value", "");
     select.appendChild(option);
     for (var i = 0; i < station_data.length; i++) {
@@ -410,7 +410,7 @@ grabData("./data/aemet-stations.json").then(function (data) {
         var station_select = document.querySelector(".station-select");
         station_select.innerHTML = "";
         var option = document.createElement("option");
-        option.innerHTML = "Selecciona una estación";
+        option.innerHTML = "Estación";
         option.setAttribute("value", "");
         station_select.appendChild(option);
         for (var i = 0; i < station_data.length; i++) {

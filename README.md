@@ -30,5 +30,5 @@ export API_KEY_AEMET=[API key facilitada por AEMET]
 ## Tareas pendientes
 
 - [x] Arreglar problemas con codificación ISO-8859-15 del servidor de la AEMET
-- [ ] Añadir campo de búsqueda (ej. con [Nominatim de OpenStreetMaps](https://nominatim.openstreetmap.org/ui/about.html), [query de ejemplo](https://nominatim.openstreetmap.org/search?q=merida&countrycodes=es&format=json), [privacidad](https://wiki.osmfoundation.org/wiki/Privacy_Policy#Data_we_receive_automatically))
+- [x] Añadir campo de búsqueda (ej. con [Nominatim de OpenStreetMaps](https://nominatim.openstreetmap.org/ui/about.html), [query de ejemplo](https://nominatim.openstreetmap.org/search?q=merida&countrycodes=es&format=json), [privacidad](https://wiki.osmfoundation.org/wiki/Privacy_Policy#Data_we_receive_automatically))
 - [ ] Ponerlo to bonito
