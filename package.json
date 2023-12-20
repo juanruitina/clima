@@ -2,9 +2,9 @@
   "name": "clima-pro",
   "version": "1.0.0",
   "description": "Get actual climate data that accounts for climate change",
-  "main": "fetch.js",
   "scripts": {
-    "start": "node fetch.js",
+    "start": "echo No build, using static data from repo",
+    "fetch": "node fetch.js",
     "cache": "node fetch.js cache",
     "dry": "node fetch.js dry",
     "test": "echo \"Error: no test specified\" && exit 1"
