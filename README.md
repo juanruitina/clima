@@ -4,7 +4,9 @@ Habitualmente el clima de un lugar se representa con las medias de los últimos 
 
 Ten en cuenta que el calientamiento global no es un proceso lineal, por lo que las proyecciones pueden no ser precisas.
 
-## Procesar datos
+## Procesar datos (obsoleto)
+
+_Debido a cambios en la API de la AEMET, ya no es posible obtener de forma sencilla los datos de tantas estaciones y tantos años. En /data se encuentran que descargué cuando llevé a cabo este proyecto, que cubren los treinta años entre 1992 y 2021._
 
 Para poder obtener y procesar los datos climatológicos, asegúrate de instalar primero todas las dependencias: `npm install`
 
@@ -15,7 +17,7 @@ Para poder obtener y procesar los datos climatológicos, asegúrate de instalar 
 
 Para desplegar el proyecto en un proveedor de sitios estáticos como Cloudflare Pages, Netlify o Vercel, configúralo para que ejecute simplemente `npm start`.
 
-## API de AEMET
+## API de AEMET (obsoleto)
 
 La aplicación utiliza la [API de la AEMET](https://opendata.aemet.es/centrodedescargas/inicio), la Agencia Estatal de Meteorología de España, para obtener los datos de cada estación meteorológica y los datos mensuales con los que se calcula la tendencia.
 

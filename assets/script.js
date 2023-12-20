@@ -109,9 +109,6 @@ function loadTable(aemet_id, is_close = false, distance = false, place_name = fa
                         <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${ station_url }')">📋 Copiar enlace</button>
                     </li>
                     <li>
-                        <a class="share-button" href="https://twitter.com/intent/tweet?source=https%3A%2F%2Fclima-pro.vercel.app&amp;text=${ encodeURIComponent(share_message) }" target="_blank" rel="noopener noreferrer">🐦 Tuitear</a>
-                    </li>
-                    <li>
                         <a href="data/stations/${climate_data.aemet_id}.json" download="Estación ${climate_data.aemet_id} ${climate_data.name}.json">JSON</a>
                     </li>
                 </ul>
